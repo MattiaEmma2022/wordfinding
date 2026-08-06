@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nomi, Cose e Città — Multiplayer</title>
+<style>
+  :root {
+    --bg-1: #1e1b4b;
+    --bg-2: #4c1d95;
+    --card: #ffffff;
+    --accent: #7c3aed;
+    --text-dark: #1f2937;
+    --text-muted: #6b7280;
+    --ok: #16a34a;
+    --ok-bg: #f0fdf4;
+    --warn: #dc2626;
+    --warn-bg: #fee2e2;
+    --dup: #d97706;
+    --dup-bg: #fffbeb;
+    --border: #e5e7eb;
+    --shadow: 0 10px 30px rgba(0,0,0,0.15);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(160deg, var(--bg-1), var(--bg-2) 60%, #6d28d9);
+    color: var(--text-dark);
+    display: flex;
+    justify-content: center;
+    padding: 24px 16px 60px;
+  }
+
+  .app { width: 100%; max-width: 520px; }
+
+  header { text-align: center; color: #f5f3ff; margin-bottom: 18px; }
+  header h1 { margin: 0 0 4px; font-size: 1.5rem; letter-spacing: 0.5px; }
+  header p { margin: 0; color: #ddd6fe; font-size: 0.85rem; }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #fff;
+    font-size: 0.8rem;
+    margin-bottom: 14px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 8px 14px;
+  }
+
+  .topbar .code { font-weight: 800; letter-spacing: 2px; font-size: 1rem; }
+  .topbar button {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    padding: 24px 20px;
+    margin-bottom: 16px;
+  }
+
+  .card h2 { margin: 0 0 14px; font-size: 1.15rem; }
+
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+  }
+  .field input {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 1.05rem;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .field input:focus { border-color: var(--accent); }
+  .field input:disabled { background: #f9fafb; color: var(--text-muted); }
+
+  .field.filled input { border-color: var(--ok); background: var(--ok-bg); }
+  .field.wrong-letter input { border-color: var(--warn); }
+  .hint { font-size: 0.72rem; color: var(--warn); margin-top: 4px; min-height: 14px; }
+
+  button.btn {
+    border: none;
+    border-radius: 12px;
+    padding: 13px 22px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    transition: transform 0.08s ease, opacity 0.2s;
+  }
+  button.btn:active { transform: scale(0.98); }
+  button.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .btn-primary { background: #fbbf24; color: #1f2937; }
+  .btn-secondary { background: #ede9fe; color: var(--accent); margin-top: 8px; }
+  .btn-stop { background: var(--warn); color: #fff; }
+  .btn-row { display: flex; gap: 10px; }
+  .btn-row .btn { width: auto; flex: 1; }
+
+  .error-msg {
+    background: var(--warn-bg);
+    color: var(--warn);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    margin-bottom: 14px;
+    display: none;
+  }
+  .error-msg.show { display: block; }
+
+  .room-code-display {
+    text-align: center;
+    margin: 6px 0 18px;
+  }
+  .room-code-display .code {
+    font-size: 2.4rem;
+    font-weight: 800;
+    letter-spacing: 6px;
+    color: var(--accent);
+  }
+  .room-code-display .sub { font-size: 0.8rem; color: var(--text-muted); }
+
+  .player-list { list-style: none; padding: 0; margin: 0 0 16px; }
+  .player-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.95rem;
+  }
+  .player-list li:last-child { border-bottom: none; }
+  .badge-host {
+    font-size: 0.65rem;
+    background: var(--accent);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 700;
+  }
+
+  .dial-wrap { display: flex; justify-content: center; margin-bottom: 18px; }
+  .dial { position: relative; width: 140px; height: 140px; }
+  .dial svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+  .dial circle { fill: none; stroke-width: 10; }
+  .dial .bg { stroke: #ede9fe; }
+  .dial .fg { stroke: #fbbf24; stroke-linecap: round; transition: stroke-dashoffset 0.2s linear, stroke 0.3s; }
+  .dial-center {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .dial-center .letter { font-size: 2.8rem; font-weight: 800; line-height: 1; color: var(--accent); }
+  .dial-center .seconds { font-size: 0.9rem; font-weight: 700; color: #d97706; margin-top: 2px; }
+
+  table.results-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    margin-bottom: 16px;
+  }
+  table.results-table th, table.results-table td {
+    border: 1px solid var(--border);
+    padding: 6px 8px;
+    text-align: left;
+  }
+  table.results-table th { background: #f5f3ff; font-size: 0.72rem; text-transform: uppercase; }
+  td.cell-ok { background: var(--ok-bg); }
+  td.cell-dup { background: var(--dup-bg); }
+  td.cell-invalid { background: var(--warn-bg); color: var(--text-muted); }
+
+  .leaderboard { list-style: none; padding: 0; margin: 0 0 16px; }
+  .leaderboard li {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+  }
+  .leaderboard li:first-child { color: var(--accent); font-size: 1.05rem; }
+  .leaderboard li .pts { color: var(--text-muted); font-weight: 700; }
+
+  .status-banner {
+    text-align: center;
+    font-weight: 700;
+    padding: 10px 14px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+  }
+  .status-banner.time-up { background: var(--warn-bg); color: var(--warn); }
+  .status-banner.stopped { background: var(--ok-bg); color: var(--ok); }
+
+  .hidden { display: none !important; }
+
+  footer { text-align: center; color: #ddd6fe; font-size: 0.72rem; margin-top: 20px; }
+  .waiting-msg { text-align: center; color: var(--text-muted); padding: 10px 0; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>🎲 Nomi, Cose e Città</h1>
+    <p>Multiplayer online — stanza con codice</p>
+  </header>
+
+  <div id="topbar" class="topbar hidden">
+    <div>Stanza <span class="code" id="topbarCode">----</span> · Round <span id="topbarRound">0</span></div>
+    <button id="leaveBtn">Esci</button>
+  </div>
+
+  <div id="errorBox" class="error-msg"></div>
+
+  <!-- HOME -->
+  <div id="view-home" class="card">
+    <h2>Inizia a giocare</h2>
+    <div class="field">
+      <label for="playerName">Il tuo nome</label>
+      <input type="text" id="playerName" placeholder="Es. Mattia" maxlength="20">
+    </div>
+    <button class="btn btn-primary" id="createRoomBtn">Crea una nuova stanza</button>
+    <div class="field" style="margin-top:18px;">
+      <label for="joinCodeInput">Oppure entra con un codice</label>
+      <input type="text" id="joinCodeInput" placeholder="Es. AB3F" maxlength="4" style="text-transform:uppercase;">
+    </div>
+    <button class="btn btn-secondary" id="joinRoomBtn">Entra nella stanza</button>
+  </div>
+
+  <!-- LOBBY -->
+  <div id="view-lobby" class="card hidden">
+    <h2>Sala d'attesa</h2>
+    <div class="room-code-display">
+      <div class="code" id="lobbyCode">----</div>
+      <div class="sub">condividi questo codice con gli altri giocatori</div>
+    </div>
+    <ul class="player-list" id="lobbyPlayerList"></ul>
+    <button class="btn btn-primary" id="startRoundBtn">Inizia round</button>
+    <div class="waiting-msg hidden" id="waitingHostMsg">In attesa che l'host avvii il round...</div>
+  </div>
+
+  <!-- PLAYING -->
+  <div id="view-playing" class="card hidden">
+    <div class="dial-wrap">
+      <div class="dial">
+        <svg viewBox="0 0 140 140">
+          <circle class="bg" cx="70" cy="70" r="60"></circle>
+          <circle class="fg" id="timerRing" cx="70" cy="70" r="60"></circle>
+        </svg>
+        <div class="dial-center">
+          <div class="letter" id="letterDisplay">?</div>
+          <div class="seconds" id="secondsDisplay">60s</div>
+        </div>
+      </div>
+    </div>
+    <div id="board"></div>
+    <button class="btn btn-stop" id="stopBtn">STOP! Ho finito</button>
+    <p class="waiting-msg" id="playersInRoundMsg"></p>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="view-results" class="card hidden">
+    <h2>Risultati round <span id="resultsRound"></span></h2>
+    <div id="resultsTableWrap"></div>
+    <h2>Classifica</h2>
+    <ul class="leaderboard" id="leaderboard"></ul>
+    <button class="btn btn-primary" id="nextRoundBtn">Prossimo round</button>
+    <div class="waiting-msg hidden" id="waitingNextMsg">In attesa che l'host avvii il prossimo round...</div>
+  </div>
+
+  <footer>Versione multiplayer · v2</footer>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  // ---------- Costanti di gioco ----------
+  var CATEGORIES = [
+    { key: "nome", label: "Nome" },
+    { key: "citta", label: "Città" },
+    { key: "paese", label: "Paese" },
+    { key: "cosa", label: "Cosa" },
+    { key: "animale", label: "Animale" },
+    { key: "fiume", label: "Fiume" }
+  ];
+  var LETTERS = "ABCDEFGILMNOPRSTUVZ".split("");
+  var ROUND_MS = 60000;
+  var CODE_CHARSET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // niente 0/O/1/I per evitare ambiguità
+
+  // ---------- Funzioni pure (nessuna dipendenza da DOM/Firebase) ----------
+  // Esposte su window per poterle testare/importare separatamente.
+  function generateRoomCode() {
+    var code = "";
+    for (var i = 0; i < 4; i++) {
+      code += CODE_CHARSET.charAt(Math.floor(Math.random() * CODE_CHARSET.length));
+    }
+    return code;
+  }
+
+  function pickLetter(lastLetter) {
+    var pool = LETTERS.filter(function (l) { return l !== lastLetter; });
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  // Calcola i punti per ogni giocatore in un round, applicando la regola:
+  // risposta assente o che non inizia con la lettera => 0 punti
+  // risposta valida e unica tra i giocatori => 10 punti
+  // risposta valida ma duplicata (stessa parola di un altro giocatore) => 5 punti
+  // Ritorna { perCategory: { catKey: { playerId: {status, points} } }, totals: { playerId: number } }
+  function computeRoundScores(playersAnswers, letter) {
+    var perCategory = {};
+    var totals = {};
+    Object.keys(playersAnswers).forEach(function (pid) { totals[pid] = 0; });
+
+    CATEGORIES.forEach(function (cat) {
+      var normalized = {}; // pid -> normalized answer (only if valid)
+      Object.keys(playersAnswers).forEach(function (pid) {
+        var answers = playersAnswers[pid] || {};
+        var raw = (answers[cat.key] || "").trim();
+        if (raw.length === 0) return;
+        var firstChar = raw.charAt(0).toUpperCase();
+        if (firstChar !== letter) return;
+        normalized[pid] = raw.toLowerCase();
+      });
+
+      var freq = {};
+      Object.keys(normalized).forEach(function (pid) {
+        var val = normalized[pid];
+        freq[val] = (freq[val] || 0) + 1;
+      });
+
+      perCategory[cat.key] = {};
+      Object.keys(playersAnswers).forEach(function (pid) {
+        var val = normalized[pid];
+        var entry;
+        if (val === undefined) {
+          entry = { status: "invalid", points: 0 };
+        } else if (freq[val] === 1) {
+          entry = { status: "unique", points: 10 };
+        } else {
+          entry = { status: "duplicate", points: 5 };
+        }
+        perCategory[cat.key][pid] = entry;
+        totals[pid] += entry.points;
+      });
+    });
+
+    return { perCategory: perCategory, totals: totals };
+  }
+
+  window.__game = {
+    generateRoomCode: generateRoomCode,
+    pickLetter: pickLetter,
+    computeRoundScores: computeRoundScores,
+    CATEGORIES: CATEGORIES,
+    LETTERS: LETTERS
+  };
+
+  // ---------- Setup Firebase ----------
+  var db = null;
+  var firebaseReady = false;
+  try {
+    if (typeof firebaseConfig !== "undefined" && firebaseConfig.apiKey !== "INSERISCI_QUI") {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+      firebaseReady = true;
+    }
+  } catch (e) {
+    console.error("Errore inizializzazione Firebase:", e);
+  }
+
+  function showError(msg) {
+    var box = document.getElementById("errorBox");
+    box.textContent = msg;
+    box.className = "error-msg show";
+  }
+  function clearError() {
+    document.getElementById("errorBox").className = "error-msg";
+  }
+
+  if (!firebaseReady) {
+    showError("Firebase non è configurato. Apri firebase-config.js e inserisci i dati del tuo progetto Firebase (vedi README.md) per poter creare o entrare in una stanza.");
+  }
+
+  // ---------- Stato locale ----------
+  var myId = localStorage.getItem("ncc_playerId");
+  if (!myId) {
+    myId = "p_" + Math.random().toString(36).slice(2, 10);
+    localStorage.setItem("ncc_playerId", myId);
+  }
+
+  var state = {
+    roomCode: null,
+    isHost: false,
+    room: null,       // ultimo snapshot di rooms/{code}
+    players: {},      // ultimo snapshot di rooms/{code}/players
+    localTimerId: null,
+    finalizedRound: null, // numero round per cui ho già bloccato/inviato le risposte
+    scoredRound: null      // numero round per cui ho già scritto i punteggi
+  };
+
+  var refs = { room: null, players: null };
+
+  // ---------- Elementi DOM ----------
+  var views = {
+    home: document.getElementById("view-home"),
+    lobby: document.getElementById("view-lobby"),
+    playing: document.getElementById("view-playing"),
+    results: document.getElementById("view-results")
+  };
+  function showView(name) {
+    Object.keys(views).forEach(function (k) {
+      views[k].classList.toggle("hidden", k !== name);
+    });
+  }
+
+  var topbar = document.getElementById("topbar");
+  var topbarCode = document.getElementById("topbarCode");
+  var topbarRound = document.getElementById("topbarRound");
+
+  // ---------- Home: crea / entra ----------
+  var playerNameInput = document.getElementById("playerName");
+  var savedName = localStorage.getItem("ncc_playerName");
+  if (savedName) playerNameInput.value = savedName;
+
+  document.getElementById("createRoomBtn").addEventListener("click", function () {
+    var name = (playerNameInput.value || "").trim();
+    if (!name) { showError("Inserisci il tuo nome."); return; }
+    if (!firebaseReady) { showError("Configura Firebase prima di continuare (vedi README.md)."); return; }
+    clearError();
+    localStorage.setItem("ncc_playerName", name);
+    createRoom(name);
+  });
+
+  document.getElementById("joinRoomBtn").addEventListener("click", function () {
+    var name = (playerNameInput.value || "").trim();
+    var code = (document.getElementById("joinCodeInput").value || "").trim().toUpperCase();
+    if (!name) { showError("Inserisci il tuo nome."); return; }
+    if (!code) { showError("Inserisci il codice della stanza."); return; }
+    if (!firebaseReady) { showError("Configura Firebase prima di continuare (vedi README.md)."); return; }
+    clearError();
+    localStorage.setItem("ncc_playerName", name);
+    joinRoom(code, name);
+  });
+
+  document.getElementById("leaveBtn").addEventListener("click", leaveRoom);
+
+  function createRoom(name, attemptsLeft) {
+    attemptsLeft = attemptsLeft === undefined ? 5 : attemptsLeft;
+    var code = generateRoomCode();
+    db.ref("rooms/" + code).once("value").then(function (snap) {
+      if (snap.exists()) {
+        if (attemptsLeft <= 0) { showError("Non riesco a creare una stanza, riprova."); return; }
+        return createRoom(name, attemptsLeft - 1);
+      }
+      var roomData = {
+        state: "lobby",
+        hostId: myId,
+        round: 0,
+        lastLetter: null,
+        letter: null,
+        endTime: null
+      };
+      db.ref("rooms/" + code).set(roomData).then(function () {
+        return db.ref("rooms/" + code + "/players/" + myId).set({
+          name: name,
+          joinedAt: firebase.database.ServerValue.TIMESTAMP
+        });
+      }).then(function () {
+        enterRoom(code, true);
+      }).catch(function (e) { showError("Errore creando la stanza: " + e.message); });
+    }).catch(function (e) { showError("Errore creando la stanza: " + e.message); });
+  }
+
+  function joinRoom(code, name) {
+    db.ref("rooms/" + code).once("value").then(function (snap) {
+      if (!snap.exists()) { showError("Nessuna stanza trovata con il codice " + code + "."); return; }
+      return db.ref("rooms/" + code + "/players/" + myId).set({
+        name: name,
+        joinedAt: firebase.database.ServerValue.TIMESTAMP
+      }).then(function () {
+        enterRoom(code, snap.val().hostId === myId);
+      });
+    }).catch(function (e) { showError("Errore entrando nella stanza: " + e.message); });
+  }
+
+  function enterRoom(code, isHost) {
+    state.roomCode = code;
+    state.isHost = isHost;
+    topbar.classList.remove("hidden");
+    topbarCode.textContent = code;
+    document.getElementById("lobbyCode").textContent = code;
+
+    refs.room = db.ref("rooms/" + code);
+    refs.players = db.ref("rooms/" + code + "/players");
+
+    refs.room.on("value", onRoomChange);
+    refs.players.on("value", onPlayersChange);
+  }
+
+  function leaveRoom() {
+    if (state.roomCode) {
+      if (refs.players) db.ref("rooms/" + state.roomCode + "/players/" + myId).remove();
+      if (refs.room) refs.room.off();
+      if (refs.players) refs.players.off();
+    }
+    clearInterval(state.localTimerId);
+    state.roomCode = null;
+    state.isHost = false;
+    state.room = null;
+    state.players = {};
+    state.finalizedRound = null;
+    state.scoredRound = null;
+    topbar.classList.add("hidden");
+    showView("home");
+  }
+
+  // ---------- Reazione ai cambi di stato stanza/giocatori ----------
+  function onRoomChange(snap) {
+    var room = snap.val();
+    if (!room) { leaveRoom(); return; }
+    state.room = room;
+    topbarRound.textContent = room.round || 0;
+
+    if (room.state === "lobby") {
+      renderLobby();
+      showView("lobby");
+    } else if (room.state === "playing") {
+      renderPlaying();
+      showView("playing");
+    } else if (room.state === "results") {
+      renderResults();
+      showView("results");
+    }
+  }
+
+  function onPlayersChange(snap) {
+    state.players = snap.val() || {};
+    if (state.room && state.room.state === "lobby") renderLobby();
+    if (state.room && state.room.state === "results") renderResults();
+  }
+
+  // ---------- LOBBY ----------
+  function renderLobby() {
+    var list = document.getElementById("lobbyPlayerList");
+    list.innerHTML = "";
+    Object.keys(state.players).forEach(function (pid) {
+      var p = state.players[pid];
+      var li = document.createElement("li");
+      li.textContent = p.name;
+      if (pid === state.room.hostId) {
+        var badge = document.createElement("span");
+        badge.className = "badge-host";
+        badge.textContent = "HOST";
+        li.appendChild(badge);
+      }
+      list.appendChild(li);
+    });
+
+    var startBtn = document.getElementById("startRoundBtn");
+    var waitingMsg = document.getElementById("waitingHostMsg");
+    startBtn.classList.toggle("hidden", !state.isHost);
+    waitingMsg.classList.toggle("hidden", state.isHost);
+  }
+
+  document.getElementById("startRoundBtn").addEventListener("click", startRound);
+  document.getElementById("nextRoundBtn").addEventListener("click", startRound);
+
+  function startRound() {
+    var newRound = (state.room.round || 0) + 1;
+    var letter = pickLetter(state.room.lastLetter);
+    var endTime = Date.now() + ROUND_MS;
+
+    var updates = {};
+    updates["rooms/" + state.roomCode + "/state"] = "playing";
+    updates["rooms/" + state.roomCode + "/round"] = newRound;
+    updates["rooms/" + state.roomCode + "/letter"] = letter;
+    updates["rooms/" + state.roomCode + "/lastLetter"] = letter;
+    updates["rooms/" + state.roomCode + "/endTime"] = endTime;
+    Object.keys(state.players).forEach(function (pid) {
+      updates["rooms/" + state.roomCode + "/players/" + pid + "/answers"] = null;
+    });
+
+    db.ref().update(updates).catch(function (e) { showError("Errore avviando il round: " + e.message); });
+  }
+
+  // ---------- PLAYING ----------
+  var boardBuiltForRound = null;
+
+  function renderPlaying() {
+    var room = state.room;
+    document.getElementById("letterDisplay").textContent = room.letter;
+
+    if (boardBuiltForRound !== room.round) {
+      buildBoard(room.letter);
+      boardBuiltForRound = room.round;
+      state.finalizedRound = null;
+    }
+
+    var count = Object.keys(state.players).length;
+    document.getElementById("playersInRoundMsg").textContent = count + " giocatori in questo round";
+
+    tickTimer();
+    clearInterval(state.localTimerId);
+    state.localTimerId = setInterval(tickTimer, 250);
+  }
+
+  var RADIUS = 60;
+  var CIRC = 2 * Math.PI * RADIUS;
+  document.getElementById("timerRing").style.strokeDasharray = CIRC;
+
+  function tickTimer() {
+    var room = state.room;
+    if (!room || room.state !== "playing") { clearInterval(state.localTimerId); return; }
+    var remainingMs = Math.max(0, room.endTime - Date.now());
+    var remainingS = Math.ceil(remainingMs / 1000);
+    var ring = document.getElementById("timerRing");
+    var pct = remainingMs / ROUND_MS;
+    ring.style.strokeDashoffset = CIRC * (1 - pct);
+    ring.style.stroke = remainingS <= 10 ? "#ef4444" : (remainingS <= 25 ? "#fb923c" : "#fbbf24");
+    document.getElementById("secondsDisplay").textContent = remainingS + "s";
+
+    if (remainingMs <= 0) {
+      finalizeMyAnswers();
+      clearInterval(state.localTimerId);
+      // Chiunque osservi la fine del tempo può far avanzare la stanza ai risultati.
+      setTimeout(function () {
+        if (state.room && state.room.state === "playing") {
+          db.ref("rooms/" + state.roomCode + "/state").set("results");
+        }
+      }, 800);
+    }
+  }
+
+  function buildBoard(letter) {
+    var board = document.getElementById("board");
+    board.innerHTML = "";
+    CATEGORIES.forEach(function (cat) {
+      var field = document.createElement("div");
+      field.className = "field";
+      field.id = "pfield-" + cat.key;
+
+      var label = document.createElement("label");
+      label.textContent = cat.label;
+
+      var input = document.createElement("input");
+      input.type = "text";
+      input.id = "pinput-" + cat.key;
+      input.autocomplete = "off";
+      input.placeholder = "Con la lettera " + letter + "...";
+
+      var hint = document.createElement("div");
+      hint.className = "hint";
+      hint.id = "phint-" + cat.key;
+
+      var debounceTimer = null;
+      input.addEventListener("input", function () {
+        var val = input.value.trim();
+        field.classList.remove("filled", "wrong-letter");
+        hint.textContent = "";
+        if (val.length > 0) {
+          if (val.charAt(0).toUpperCase() !== letter) {
+            field.classList.add("wrong-letter");
+            hint.textContent = "Dovrebbe iniziare con " + letter;
+          } else {
+            field.classList.add("filled");
+          }
+        }
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(function () { saveAnswer(cat.key, input.value); }, 250);
+      });
+
+      field.appendChild(label);
+      field.appendChild(input);
+      field.appendChild(hint);
+      board.appendChild(field);
+    });
+  }
+
+  function saveAnswer(catKey, value) {
+    if (!state.roomCode) return;
+    db.ref("rooms/" + state.roomCode + "/players/" + myId + "/answers/" + catKey).set(value);
+  }
+
+  document.getElementById("stopBtn").addEventListener("click", function () {
+    if (!state.room || state.room.state !== "playing") return;
+    db.ref("rooms/" + state.roomCode + "/endTime").set(Date.now());
+  });
+
+  function finalizeMyAnswers() {
+    if (state.finalizedRound === state.room.round) return;
+    state.finalizedRound = state.room.round;
+    var inputs = document.querySelectorAll("#board input");
+    inputs.forEach(function (input) { input.disabled = true; });
+  }
+
+  // ---------- RESULTS ----------
+  function renderResults() {
+    var room = state.room;
+    if (!room.letter) return;
+    document.getElementById("resultsRound").textContent = room.round;
+
+    var playersAnswers = {};
+    Object.keys(state.players).forEach(function (pid) {
+      playersAnswers[pid] = (state.players[pid] && state.players[pid].answers) || {};
+    });
+
+    var scoring = computeRoundScores(playersAnswers, room.letter);
+
+    // Salva i punti di questo round (idempotente: stesso calcolo su ogni client)
+    if (state.scoredRound !== room.round && state.isHost) {
+      state.scoredRound = room.round;
+      Object.keys(scoring.totals).forEach(function (pid) {
+        db.ref("rooms/" + state.roomCode + "/players/" + pid + "/scoreByRound/" + room.round)
+          .set(scoring.totals[pid]);
+      });
+    }
+
+    renderResultsTable(room, playersAnswers, scoring);
+    renderLeaderboard();
+
+    var nextBtn = document.getElementById("nextRoundBtn");
+    var waitingMsg = document.getElementById("waitingNextMsg");
+    nextBtn.classList.toggle("hidden", !state.isHost);
+    waitingMsg.classList.toggle("hidden", state.isHost);
+  }
+
+  function renderResultsTable(room, playersAnswers, scoring) {
+    var wrap = document.getElementById("resultsTableWrap");
+    var pids = Object.keys(state.players);
+    var table = document.createElement("table");
+    table.className = "results-table";
+
+    var thead = document.createElement("tr");
+    thead.appendChild(document.createElement("th"));
+    CATEGORIES.forEach(function (cat) {
+      var th = document.createElement("th");
+      th.textContent = cat.label;
+      thead.appendChild(th);
+    });
+    table.appendChild(thead);
+
+    pids.forEach(function (pid) {
+      var tr = document.createElement("tr");
+      var nameTd = document.createElement("td");
+      nameTd.textContent = (state.players[pid] && state.players[pid].name) || "?";
+      nameTd.style.fontWeight = "700";
+      tr.appendChild(nameTd);
+
+      CATEGORIES.forEach(function (cat) {
+        var td = document.createElement("td");
+        var answer = (playersAnswers[pid] && playersAnswers[pid][cat.key]) || "";
+        var entry = scoring.perCategory[cat.key][pid];
+        td.textContent = answer ? (answer + " (" + entry.points + ")") : "—";
+        td.className = entry.status === "unique" ? "cell-ok" : (entry.status === "duplicate" ? "cell-dup" : "cell-invalid");
+        tr.appendChild(td);
+      });
+      table.appendChild(tr);
+    });
+
+    wrap.innerHTML = "";
+    wrap.appendChild(table);
+  }
+
+  function renderLeaderboard() {
+    var list = document.getElementById("leaderboard");
+    var pids = Object.keys(state.players);
+    var rows = pids.map(function (pid) {
+      var p = state.players[pid];
+      var scoreByRound = (p && p.scoreByRound) || {};
+      var total = Object.keys(scoreByRound).reduce(function (sum, r) { return sum + (scoreByRound[r] || 0); }, 0);
+      return { name: p ? p.name : "?", total: total };
+    });
+    rows.sort(function (a, b) { return b.total - a.total; });
+
+    list.innerHTML = "";
+    rows.forEach(function (row) {
+      var li = document.createElement("li");
+      var nameSpan = document.createElement("span");
+      nameSpan.textContent = row.name;
+      var ptsSpan = document.createElement("span");
+      ptsSpan.className = "pts";
+      ptsSpan.textContent = row.total + " pt";
+      li.appendChild(nameSpan);
+      li.appendChild(ptsSpan);
+      list.appendChild(li);
+    });
+  }
+
+  showView("home");
+})();
+</script>
+</body>
+</html>
