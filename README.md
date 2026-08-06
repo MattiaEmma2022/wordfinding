@@ -52,3 +52,4 @@ La modalità test lascia il database aperto in lettura/scrittura a chiunque cono
 - Non c'è un controllo che la parola scritta esista davvero (es. potresti scrivere una città inventata) — la validazione è solo "inizia con la lettera giusta".
 - Se un giocatore chiude la pagina a metà round, il suo nome resta nella stanza (non c'è ancora rilevamento di disconnessione).
 - Le regole del database in modalità test scadono dopo 30 giorni: dopo quella data smetterà di funzionare finché non aggiorni le regole (vedi nota sicurezza sopra).
+-Rendere visuals piu efficaci
