@@ -13,11 +13,11 @@
 // ============================================================
 
 const firebaseConfig = {
-  apiKey: "INSERISCI_QUI",
-  authDomain: "INSERISCI_QUI.firebaseapp.com",
-  databaseURL: "https://INSERISCI_QUI.firebaseio.com",
-  projectId: "INSERISCI_QUI",
-  storageBucket: "INSERISCI_QUI.appspot.com",
-  messagingSenderId: "INSERISCI_QUI",
-  appId: "INSERISCI_QUI"
+  apiKey: "AIzaSyBZhZ0G73gdOlF5G-CWmrcYZK_ymd979cQ",
+  authDomain: "nomicosecitta-161d9.firebaseapp.com",
+  databaseURL: "https://nomicosecitta-161d9-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "nomicosecitta-161d9",
+  storageBucket: "nomicosecitta-161d9.firebasestorage.app",
+  messagingSenderId: "66595160082",
+  appId: "1:66595160082:web:ed79dd559c6da919ef98cb"
 };
