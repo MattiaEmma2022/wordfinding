@@ -1,57 +1,56 @@
-# Nomi, Cose e Città — Multiplayer online
+# 🎲 Nomi, Cose e Città
 
-Versione online del gioco: crea una stanza, condividi il codice a 4 caratteri
-con altri giocatori, e giocate tutti insieme con la stessa lettera e lo stesso
-timer di 60 secondi, ognuno dal proprio telefono/computer.
+La versione online del classico gioco da tavolo: stessa lettera, stesso
+countdown di 60 secondi per tutti, ognuno risponde dal proprio telefono o
+computer.
+
+## Gioca subito
+
+👉 **https://mattiaemma2022.github.io/wordfinding/**
+
+1. Una persona apre il link, sceglie il proprio nome e clicca **"Crea una
+   nuova stanza"**: ottiene un codice a 4 caratteri (es. `AB3F`).
+2. Le altre aprono lo stesso link, inseriscono il proprio nome ed entrano
+   con quel codice.
+3. L'host preme **"Inizia round"**: a tutti compare la stessa lettera e lo
+   stesso countdown, sincronizzati in tempo reale.
 
 ## Come funziona
 
-- **Crea stanza**: genera un codice (es. `AB3F`) e ti metti in attesa in una lobby.
-- **Entra con un codice**: gli altri giocatori inseriscono nome + codice per entrare nella stessa stanza.
-- **Host**: chi crea la stanza è l'host e può premere "Inizia round" / "Prossimo round". Gli altri vedono "in attesa".
-- **Round**: a tutti viene mostrata la stessa lettera e lo stesso countdown di 60 secondi (sincronizzato tramite Firebase). Ognuno scrive le proprie 6 risposte sul proprio schermo — non si vedono le risposte degli altri finché il round non finisce.
-- **STOP**: chiunque può premere "STOP! Ho finito" per terminare il round in anticipo per tutti (come nel gioco da tavolo).
-- **Punteggio**: a fine round si vede una tabella con le risposte di tutti. Regola: risposta assente o che non inizia con la lettera giusta = 0 punti; risposta valida e unica = 10 punti; risposta valida ma scritta anche da un altro giocatore = 5 punti (regola classica di "Nomi Cose e Città"). La classifica è cumulativa round dopo round.
-- **Lingua**: si scelgono Italiano o Inglese dalla home, prima di creare una stanza. La lingua è una proprietà della stanza: chi entra con un codice vede automaticamente le categorie e l'alfabeto nella lingua scelta da chi ha creato la stanza.
-- **Categorie personalizzate**: chi crea la stanza può modificare, aggiungere o rimuovere le categorie di gioco (minimo 2, massimo 10) prima di creare la stanza — di default sono Nome/Città/Paese/Cosa/Animale/Fiume (o l'equivalente inglese). Tutti i giocatori nella stanza giocano con le categorie scelte dall'host.
-- **Correzione manuale (host)**: non c'è un database automatico di parole valide — la validazione è "inizia con la lettera giusta" più il giudizio dell'host. Nella schermata dei risultati, l'host può toccare qualsiasi risposta per forzarla valida o non valida (per i casi dubbi: parole regionali, nomi propri, categorie personalizzate ambigue, ecc.). Il round successivo blocca il punteggio con le correzioni applicate.
+- **Round**: 60 secondi per scrivere una risposta a testa per ogni
+  categoria, tutte con la stessa lettera. Le risposte degli altri restano
+  nascoste finché il round non finisce.
+- **STOP**: chiunque può premere "STOP! Ho finito" per chiudere il round in
+  anticipo per tutti, come nel gioco da tavolo.
+- **Revisione categoria per categoria**: a fine round le risposte si
+  rivelano una categoria alla volta, non tutte insieme — come quando si
+  legge ad alta voce intorno al tavolo. L'host passa alla categoria
+  successiva quando è pronto e può tornare indietro se serve.
+- **Punteggio**: risposta assente o che non inizia con la lettera giusta =
+  0 punti; valida e unica = 10 punti; valida ma scritta anche da un altro
+  giocatore = 5 punti (regola classica). Non c'è un dizionario automatico:
+  è l'host a giudicare — toccando una risposta durante la revisione la si
+  forza valida o non valida per i casi dubbi. Il punteggio si blocca
+  quando l'host passa al round successivo.
+- **Lingua**: Italiano o Inglese, si sceglie in home prima di creare la
+  stanza. Chi entra con un codice vede automaticamente la lingua scelta
+  dall'host.
+- **Categorie personalizzate**: l'host può modificare, aggiungere (fino a
+  10) o togliere (minimo 2) le categorie prima di creare la stanza. Di
+  base sono Nome, Città, Paese, Cosa, Animale, Fiume (o l'equivalente
+  inglese).
+- **Classifica**: cumulativa, round dopo round, finché la stanza resta
+  aperta.
 
-## Passo 1 — Crea un progetto Firebase (gratis, 5 minuti)
+## Da sapere
 
-Serve per sincronizzare in tempo reale lettera, timer e risposte tra i giocatori.
-
-1. Vai su https://console.firebase.google.com e accedi con un account Google.
-2. Clicca **"Aggiungi progetto"**, dagli un nome (es. "nomi-cose-citta"), continua senza attivare Google Analytics (non serve).
-3. Nel menu a sinistra vai su **Build → Realtime Database**.
-4. Clicca **"Crea database"**. Scegli una posizione (va bene quella predefinita) e **"Avvia in modalità test"** (permette letture/scritture per 30 giorni: per la v1 va bene, vedi nota sicurezza sotto).
-5. Vai su **Impostazioni progetto** (icona ingranaggio in alto a sinistra) → scheda **"Generali"** → sezione **"Le tue app"** → clicca l'icona **`</>`** (Web) per registrare una nuova app web.
-6. Dagli un nome (es. "gioco-web") e clicca **"Registra app"**. Non serve configurare Firebase Hosting.
-7. Copia i valori mostrati nell'oggetto `firebaseConfig` (apiKey, authDomain, databaseURL, projectId, storageBucket, messagingSenderId, appId).
-8. Apri il file **`firebase-config.js`** di questo progetto e sostituisci ogni `"INSERISCI_QUI"` con il valore corrispondente copiato da Firebase. Salva.
-
-### Nota sicurezza (importante ma non urgente per giocare con amici)
-
-La modalità test lascia il database aperto in lettura/scrittura a chiunque conosca l'URL per 30 giorni, poi si blocca automaticamente. Per un gioco casual va benissimo. Se vuoi regole più permanenti e leggermente più sicure, vai su **Realtime Database → Regole** e incolla il contenuto del file `database.rules.json` incluso in questo progetto, poi clicca **"Pubblica"**.
-
-## Passo 2 — Metti il progetto online con GitHub Pages (gratis)
-
-1. Vai su https://github.com e crea un account se non ne hai già uno.
-2. Clicca **"New repository"**, dagli un nome (es. `nomi-cose-citta`), lascialo **pubblico**, poi **"Create repository"**.
-3. Nella pagina del repository clicca **"uploading an existing file"** (o "Add file → Upload files") e carica questi 3 file: `index.html`, `firebase-config.js` (già con i tuoi dati Firebase inseriti), `database.rules.json`. Poi **"Commit changes"**.
-4. Vai su **Settings → Pages** (menu a sinistra del repository).
-5. In **"Build and deployment" → Source** scegli **"Deploy from a branch"**, poi in **Branch** scegli `main` e cartella `/ (root)`, clicca **Save**.
-6. Dopo 1-2 minuti la pagina mostrerà un link tipo `https://tuonomeutente.github.io/nomi-cose-citta/` — quello è il link pubblico da condividere con chi vuole giocare!
-
-## Come testare con più giocatori
-
-- Apri il link su due dispositivi diversi (o due schede del browser in incognito, per simulare due persone).
-- Sulla prima crea una stanza e nota il codice.
-- Sulla seconda inserisci un nome ed entra con quel codice.
-- L'host preme "Inizia round" e da quel momento entrambi vedono la stessa lettera e lo stesso timer.
-
-## Limiti noti di questa v1 (miglioramenti futuri possibili)
-
-- Le stanze non vengono mai eliminate automaticamente (restano nel database). Per un uso intenso si potrebbe aggiungere una pulizia periodica.
-- Non c'è un controllo automatico che la parola scritta esista davvero — la validazione è "inizia con la lettera giusta" più la correzione manuale dell'host, per scelta (niente database di parole da scaricare/mantenere).
-- Se un giocatore chiude la pagina a metà round, il suo nome resta nella stanza (non c'è ancora rilevamento di disconnessione).
-- Le regole del database in modalità test scadono dopo 30 giorni: dopo quella data smetterà di funzionare finché non aggiorni le regole (vedi nota sicurezza sopra).
+- Le stanze non vengono mai eliminate automaticamente: se una resta
+  inutilizzata semplicemente non la userà più nessuno.
+- Se un giocatore chiude la pagina a metà round, il suo nome resta nella
+  lista finché non si aggiorna la pagina (non c'è ancora rilevamento
+  automatico di disconnessione).
+- Se il gioco smette improvvisamente di sincronizzarsi tra i giocatori
+  (lettera/timer/risposte che non si aggiornano per nessuno), il motivo
+  più probabile sono le regole del database Firebase in modalità test, che
+  scadono periodicamente: vai su Firebase → Realtime Database → Regole e
+  incolla di nuovo il contenuto di `database.rules.json`, poi pubblica.

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -257,6 +257,15 @@
     margin: -6px 0 12px;
   }
 
+  .results-step-label {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin: 0 0 10px;
+  }
+
   .leaderboard { list-style: none; padding: 0; margin: 0 0 16px; }
   .leaderboard li {
     display: flex;
@@ -302,8 +311,8 @@
   <!-- HOME -->
   <div id="view-home" class="card">
     <div class="lang-toggle" id="langToggle">
-      <button type="button" class="lang-btn" id="langBtnIt" data-lang="it">Italiano</button>
       <button type="button" class="lang-btn" id="langBtnEn" data-lang="en">English</button>
+      <button type="button" class="lang-btn" id="langBtnIt" data-lang="it">Italiano</button>
     </div>
     <h2 id="homeTitle">Inizia a giocare</h2>
     <div class="field">
@@ -357,13 +366,32 @@
   <!-- RESULTS -->
   <div id="view-results" class="card hidden">
     <h2><span id="resultsTitle">Risultati round</span> <span id="resultsRound"></span></h2>
-    <p class="results-hint" id="resultsScrollHint">Scorri orizzontalmente per vedere tutte le colonne →</p>
-    <p class="results-hint hidden" id="resultsHostHint">Tocca una risposta per correggerla manualmente.</p>
-    <div id="resultsTableWrap" class="table-scroll"></div>
-    <h2 id="leaderboardTitle">Classifica</h2>
-    <ul class="leaderboard" id="leaderboard"></ul>
-    <button class="btn btn-primary" id="nextRoundBtn">Prossimo round</button>
-    <div class="waiting-msg hidden" id="waitingNextMsg">In attesa che l'host avvii il prossimo round...</div>
+
+    <div id="resultsStepSection">
+      <p class="results-step-label" id="resultsStepLabel">Categoria 1 di 6</p>
+      <p class="results-hint hidden" id="resultsHostHint">Tocca una risposta per correggerla manualmente.</p>
+      <div id="resultsTableWrap" class="table-scroll"></div>
+      <div class="btn-row">
+        <button class="btn btn-secondary hidden" id="prevCategoryBtn">← Indietro</button>
+        <button class="btn btn-primary" id="nextCategoryBtn">Avanti →</button>
+      </div>
+      <div class="waiting-msg hidden" id="waitingCategoryMsg">In attesa che l'host mostri la prossima categoria...</div>
+    </div>
+
+    <div id="resultsSummarySection" class="hidden">
+      <h2 id="leaderboardTitle">Classifica</h2>
+      <ul class="leaderboard" id="leaderboard"></ul>
+      <div class="field hidden" id="editCategoriesBox">
+        <label id="editCategoriesLabel">Categorie per il prossimo round</label>
+        <div id="gameCategoriesList"></div>
+        <button type="button" class="add-cat-btn" id="addGameCategoryBtn">+ Aggiungi categoria</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary hidden" id="backToCategoriesBtn">← Rivedi categorie</button>
+        <button class="btn btn-primary" id="nextRoundBtn">Prossimo round</button>
+      </div>
+      <div class="waiting-msg hidden" id="waitingNextMsg">In attesa che l'host avvii il prossimo round...</div>
+    </div>
   </div>
 
   <footer id="footerNote">Versione multiplayer · v4</footer>
@@ -403,6 +431,7 @@
       playerNameLabel: "Il tuo nome",
       playerNamePlaceholder: "Es. Mattia",
       categoriesLabel: "Categorie (l'host le sceglie per tutti)",
+      editCategoriesLabel: "Categorie per il prossimo round",
       addCategoryBtn: "+ Aggiungi categoria",
       removeCategoryTitle: "Rimuovi categoria",
       createRoomBtn: "Crea una nuova stanza",
@@ -419,8 +448,13 @@
       fieldPlaceholder: "Con la lettera {letter}...",
       hintWrongLetter: "Dovrebbe iniziare con {letter}",
       resultsTitle: "Risultati round",
-      resultsScrollHint: "Scorri orizzontalmente per vedere tutte le colonne →",
+      resultsStepLabel: "Categoria {current} di {total}: {label}",
       resultsHostHint: "Tocca una risposta per correggerla manualmente (valida/non valida).",
+      prevCategoryBtn: "← Indietro",
+      nextCategoryBtn: "Avanti →",
+      seeResultsBtn: "Vedi classifica →",
+      waitingCategoryMsg: "In attesa che l'host mostri la prossima categoria...",
+      backToCategoriesBtn: "← Rivedi categorie",
       leaderboardTitle: "Classifica",
       nextRoundBtn: "Prossimo round",
       waitingNextMsg: "In attesa che l'host avvii il prossimo round...",
@@ -430,7 +464,7 @@
       reasonInvalidLetter: "Non inizia con la lettera giusta",
       reasonInvalidOverride: "Segnata come non valida dall'host",
       reasonUnique: "Valida e unica: 10 punti",
-      reasonDuplicate: "Valida ma scritta anche da un altro: 5 punti",
+      reasonDuplicate: "Valida ma scritta anche da un altro giocatore: 5 punti",
       overriddenNote: "corretta manualmente dall'host",
       errNoName: "Inserisci il tuo nome.",
       errNoFirebase: "Configura Firebase prima di continuare (vedi README.md).",
@@ -453,6 +487,7 @@
       playerNameLabel: "Your name",
       playerNamePlaceholder: "E.g. Alex",
       categoriesLabel: "Categories (the host picks these for everyone)",
+      editCategoriesLabel: "Categories for the next round",
       addCategoryBtn: "+ Add category",
       removeCategoryTitle: "Remove category",
       createRoomBtn: "Create a new room",
@@ -469,13 +504,18 @@
       fieldPlaceholder: "Starting with {letter}...",
       hintWrongLetter: "Should start with {letter}",
       resultsTitle: "Round results",
-      resultsScrollHint: "Scroll sideways to see every column →",
+      resultsStepLabel: "Category {current} of {total}: {label}",
       resultsHostHint: "Tap an answer to override it manually (valid/invalid).",
+      prevCategoryBtn: "← Back",
+      nextCategoryBtn: "Next →",
+      seeResultsBtn: "See leaderboard →",
+      waitingCategoryMsg: "Waiting for the host to show the next category...",
+      backToCategoriesBtn: "← Review categories",
       leaderboardTitle: "Leaderboard",
       nextRoundBtn: "Next round",
       waitingNextMsg: "Waiting for the host to start the next round...",
       footerNote: "Multiplayer version · v4",
-      points: "pt",
+      points: "pts",
       reasonEmpty: "No answer",
       reasonInvalidLetter: "Doesn't start with the right letter",
       reasonInvalidOverride: "Marked invalid by the host",
@@ -502,8 +542,8 @@
   }
 
   function t(key, params) {
-    var dict = I18N[state.lang] || I18N.it;
-    var str = dict[key] || I18N.it[key] || key;
+    var dict = I18N[state.lang] || I18N.en;
+    var str = dict[key] || I18N.en[key] || key;
     return params ? fmt(str, params) : str;
   }
 
@@ -518,7 +558,7 @@
   }
 
   function pickLetter(lastLetter, lang) {
-    var pool = (LETTERS[lang] || LETTERS.it).filter(function (l) { return l !== lastLetter; });
+    var pool = (LETTERS[lang] || LETTERS.en).filter(function (l) { return l !== lastLetter; });
     return pool[Math.floor(Math.random() * pool.length)];
   }
 
@@ -631,7 +671,7 @@
   }
 
   var state = {
-    lang: localStorage.getItem("ncc_lang") || "it",
+    lang: localStorage.getItem("ncc_lang") || "en",
     roomCode: null,
     isHost: false,
     room: null,       // ultimo snapshot di rooms/{code}
@@ -650,7 +690,7 @@
 
   function roomCategories(room) {
     if (room && room.categories && room.categories.length) return room.categories;
-    return DEFAULT_CATEGORIES[(room && room.lang) || "it"];
+    return DEFAULT_CATEGORIES[(room && room.lang) || "en"];
   }
   function categoryKeysFor(room) {
     return roomCategories(room).map(function (_, i) { return "cat" + i; });
@@ -679,7 +719,8 @@
     "homeTitle", "playerNameLabel", "categoriesLabel", "addCategoryBtn", "createRoomBtn",
     "joinCodeLabel", "joinRoomBtn",
     "lobbyTitle", "lobbySub", "startRoundBtn", "waitingHostMsg", "stopBtn",
-    "resultsTitle", "resultsScrollHint", "resultsHostHint", "leaderboardTitle", "nextRoundBtn", "waitingNextMsg",
+    "resultsTitle", "resultsHostHint", "prevCategoryBtn", "nextCategoryBtn", "waitingCategoryMsg",
+    "backToCategoriesBtn", "editCategoriesLabel", "leaderboardTitle", "nextRoundBtn", "waitingNextMsg",
     "footerNote"
   ];
 
@@ -694,7 +735,8 @@
     document.getElementById("langBtnIt").classList.toggle("active", state.lang === "it");
     document.getElementById("langBtnEn").classList.toggle("active", state.lang === "en");
 
-    if (!categoriesDirty) renderCategoriesEditor(DEFAULT_CATEGORIES[state.lang].slice());
+    if (!categoriesDirty) homeCategoriesEditor.render(DEFAULT_CATEGORIES[state.lang].slice());
+    document.getElementById("addGameCategoryBtn").textContent = t("addCategoryBtn");
 
     if (state.room) {
       if (state.room.state === "lobby") renderLobby();
@@ -711,62 +753,70 @@
     });
   });
 
+  // ---------- Editor di categorie riusabile (home + cambio categorie a fine round) ----------
+  function createCategoriesEditor(listElId, addBtnId, onInput) {
+    var listEl = document.getElementById(listElId);
+    var addBtn = document.getElementById(addBtnId);
+
+    function getValues() {
+      return Array.prototype.map.call(listEl.querySelectorAll("input"), function (input) { return input.value; });
+    }
+
+    function render(labels) {
+      listEl.innerHTML = "";
+      labels.forEach(function (label, i) {
+        var row = document.createElement("div");
+        row.className = "category-row";
+
+        var input = document.createElement("input");
+        input.type = "text";
+        input.value = label;
+        input.maxLength = 24;
+        input.addEventListener("input", function () { if (onInput) onInput(); });
+        row.appendChild(input);
+
+        if (labels.length > MIN_CATEGORIES) {
+          var removeBtn = document.createElement("button");
+          removeBtn.type = "button";
+          removeBtn.className = "remove-cat-btn";
+          removeBtn.textContent = "×";
+          removeBtn.title = t("removeCategoryTitle");
+          removeBtn.addEventListener("click", function () {
+            if (onInput) onInput();
+            var current = getValues();
+            current.splice(i, 1);
+            render(current);
+          });
+          row.appendChild(removeBtn);
+        }
+
+        listEl.appendChild(row);
+      });
+
+      addBtn.classList.toggle("hidden", labels.length >= MAX_CATEGORIES);
+    }
+
+    addBtn.addEventListener("click", function () {
+      if (onInput) onInput();
+      var current = getValues();
+      if (current.length >= MAX_CATEGORIES) return;
+      current.push("");
+      render(current);
+      var inputs = listEl.querySelectorAll("input");
+      inputs[inputs.length - 1].focus();
+    });
+
+    return { render: render, getValues: getValues };
+  }
+
   // ---------- Home: categorie personalizzabili ----------
   var categoriesDirty = false;
+  var homeCategoriesEditor = createCategoriesEditor("categoriesList", "addCategoryBtn", function () { categoriesDirty = true; });
+  homeCategoriesEditor.render(DEFAULT_CATEGORIES[state.lang].slice());
 
-  function getCategoryInputValues() {
-    return Array.prototype.map.call(document.querySelectorAll("#categoriesList input"), function (input) {
-      return input.value;
-    });
-  }
-
-  function renderCategoriesEditor(labels) {
-    var list = document.getElementById("categoriesList");
-    list.innerHTML = "";
-    labels.forEach(function (label, i) {
-      var row = document.createElement("div");
-      row.className = "category-row";
-
-      var input = document.createElement("input");
-      input.type = "text";
-      input.value = label;
-      input.maxLength = 24;
-      input.addEventListener("input", function () { categoriesDirty = true; });
-
-      row.appendChild(input);
-
-      if (labels.length > MIN_CATEGORIES) {
-        var removeBtn = document.createElement("button");
-        removeBtn.type = "button";
-        removeBtn.className = "remove-cat-btn";
-        removeBtn.textContent = "×";
-        removeBtn.title = t("removeCategoryTitle");
-        removeBtn.addEventListener("click", function () {
-          categoriesDirty = true;
-          var current = getCategoryInputValues();
-          current.splice(i, 1);
-          renderCategoriesEditor(current);
-        });
-        row.appendChild(removeBtn);
-      }
-
-      list.appendChild(row);
-    });
-
-    document.getElementById("addCategoryBtn").classList.toggle("hidden", labels.length >= MAX_CATEGORIES);
-  }
-
-  document.getElementById("addCategoryBtn").addEventListener("click", function () {
-    categoriesDirty = true;
-    var current = getCategoryInputValues();
-    if (current.length >= MAX_CATEGORIES) return;
-    current.push("");
-    renderCategoriesEditor(current);
-    var inputs = document.querySelectorAll("#categoriesList input");
-    inputs[inputs.length - 1].focus();
-  });
-
-  renderCategoriesEditor(DEFAULT_CATEGORIES[state.lang].slice());
+  // ---------- Cambio categorie a fine round (host) ----------
+  var gameCategoriesEditor = createCategoriesEditor("gameCategoriesList", "addGameCategoryBtn");
+  var summaryEditorRound = null;
 
   // ---------- Home: crea / entra ----------
   var playerNameInput = document.getElementById("playerName");
@@ -775,7 +825,7 @@
 
   document.getElementById("createRoomBtn").addEventListener("click", function () {
     var name = (playerNameInput.value || "").trim();
-    var categories = getCategoryInputValues().map(function (c) { return c.trim(); }).filter(Boolean);
+    var categories = homeCategoriesEditor.getValues().map(function (c) { return c.trim(); }).filter(Boolean);
     if (!name) { showError(t("errNoName")); return; }
     if (categories.length < MIN_CATEGORIES) { showError(t("errNoCategories")); return; }
     if (!firebaseReady) { showError(t("errNoFirebase")); return; }
@@ -867,6 +917,7 @@
     state.overrides = {};
     state.overridesRound = null;
     state.finalizedRound = null;
+    summaryEditorRound = null;
     topbar.classList.add("hidden");
     applyI18n();
     showView("home");
@@ -902,20 +953,22 @@
   function onRoomChange(snap) {
     var room = snap.val();
     if (!room) { leaveRoom(); return; }
-    var langChanged = state.lang !== (room.lang || "it");
+    var langChanged = state.lang !== (room.lang || "en");
     state.room = room;
-    state.lang = room.lang || "it";
+    state.lang = room.lang || "en";
     if (langChanged) applyI18n();
     topbarRound.textContent = room.round || 0;
 
     if (room.state === "lobby") {
       detachOverridesListener();
       state.overridesRound = null;
+      summaryEditorRound = null;
       renderLobby();
       showView("lobby");
     } else if (room.state === "playing") {
       detachOverridesListener();
       state.overridesRound = null;
+      summaryEditorRound = null;
       renderPlaying();
       showView("playing");
     } else if (room.state === "results") {
@@ -980,6 +1033,14 @@
       });
     }
 
+    // L'host può aver modificato le categorie nella schermata dei risultati:
+    // se lo ha fatto, quelle valgono dal prossimo round in poi.
+    if (state.room.state === "results" && state.isHost) {
+      var editedCategories = gameCategoriesEditor.getValues().map(function (c) { return c.trim(); }).filter(Boolean);
+      if (editedCategories.length < MIN_CATEGORIES) { showError(t("errNoCategories")); return; }
+      updates["rooms/" + state.roomCode + "/categories"] = editedCategories;
+    }
+
     var newRound = (state.room.round || 0) + 1;
     var letter = pickLetter(state.room.lastLetter, state.lang);
     var endTime = Date.now() + ROUND_MS;
@@ -1038,7 +1099,10 @@
       // Chiunque osservi la fine del tempo può far avanzare la stanza ai risultati.
       setTimeout(function () {
         if (state.room && state.room.state === "playing") {
-          db.ref("rooms/" + state.roomCode + "/state").set("results");
+          var updates = {};
+          updates["rooms/" + state.roomCode + "/state"] = "results";
+          updates["rooms/" + state.roomCode + "/resultsStep"] = 0;
+          db.ref().update(updates);
         }
       }, 800);
     }
@@ -1109,22 +1173,30 @@
   }
 
   // ---------- RESULTS ----------
+  // Le categorie vengono mostrate una alla volta (in sincrono per tutti, tramite
+  // rooms/{code}/resultsStep) cosí l'host puó leggere/validare le risposte categoria
+  // per categoria, come nel gioco da tavolo, invece di vedere subito tutta la griglia.
   function renderResults() {
     var room = state.room;
     if (!room.letter) return;
     document.getElementById("resultsRound").textContent = room.round;
 
     var scoring = computeRoundScoresForCurrentState();
+    var categories = roomCategories(room);
+    var step = room.resultsStep || 0;
 
-    renderResultsTable(room, scoring);
-    renderLeaderboard();
+    var stepSection = document.getElementById("resultsStepSection");
+    var summarySection = document.getElementById("resultsSummarySection");
 
-    var nextBtn = document.getElementById("nextRoundBtn");
-    var waitingMsg = document.getElementById("waitingNextMsg");
-    var hostHint = document.getElementById("resultsHostHint");
-    nextBtn.classList.toggle("hidden", !state.isHost);
-    waitingMsg.classList.toggle("hidden", state.isHost);
-    hostHint.classList.toggle("hidden", !state.isHost);
+    if (step >= categories.length) {
+      stepSection.classList.add("hidden");
+      summarySection.classList.remove("hidden");
+      renderResultsSummary();
+    } else {
+      summarySection.classList.add("hidden");
+      stepSection.classList.remove("hidden");
+      renderResultsStep(scoring, categories, step);
+    }
   }
 
   function reasonKeyFor(status) {
@@ -1138,20 +1210,39 @@
     }
   }
 
-  function renderResultsTable(room, scoring) {
+  function buildAnswerCell(catKey, pid, scoring) {
+    var td = document.createElement("td");
+    var answer = ((state.players[pid] && state.players[pid].answers) || {})[catKey] || "";
+    var entry = scoring.perCategory[catKey][pid];
+    var text = answer ? (answer + " (" + entry.points + ")") : "—";
+    if (entry.overridden) text += " ✏️";
+    td.textContent = text;
+    td.className = entry.status === "unique" ? "cell-ok" : (entry.status === "duplicate" ? "cell-dup" : "cell-invalid");
+
+    var titleParts = [];
+    var reasonKey = reasonKeyFor(entry.status);
+    if (reasonKey) titleParts.push(t(reasonKey));
+    if (entry.overridden) titleParts.push(t("overriddenNote"));
+    td.title = titleParts.join(" · ");
+
+    if (state.isHost && answer) {
+      td.classList.add("editable");
+      td.addEventListener("click", function () { cycleOverride(catKey, pid); });
+    }
+    return td;
+  }
+
+  function renderCategoryTable(catKey, label, scoring) {
     var wrap = document.getElementById("resultsTableWrap");
     var pids = Object.keys(state.players);
-    var categories = roomCategories(room);
     var table = document.createElement("table");
     table.className = "results-table";
 
     var thead = document.createElement("tr");
     thead.appendChild(document.createElement("th"));
-    categories.forEach(function (label) {
-      var th = document.createElement("th");
-      th.textContent = label;
-      thead.appendChild(th);
-    });
+    var th = document.createElement("th");
+    th.textContent = label;
+    thead.appendChild(th);
     table.appendChild(thead);
 
     pids.forEach(function (pid) {
@@ -1160,36 +1251,66 @@
       nameTd.textContent = (state.players[pid] && state.players[pid].name) || "?";
       nameTd.style.fontWeight = "700";
       tr.appendChild(nameTd);
-
-      categories.forEach(function (label, i) {
-        var catKey = "cat" + i;
-        var td = document.createElement("td");
-        var answer = ((state.players[pid] && state.players[pid].answers) || {})[catKey] || "";
-        var entry = scoring.perCategory[catKey][pid];
-        var text = answer ? (answer + " (" + entry.points + ")") : "—";
-        if (entry.overridden) text += " ✏️";
-        td.textContent = text;
-        td.className = entry.status === "unique" ? "cell-ok" : (entry.status === "duplicate" ? "cell-dup" : "cell-invalid");
-
-        var titleParts = [];
-        var reasonKey = reasonKeyFor(entry.status);
-        if (reasonKey) titleParts.push(t(reasonKey));
-        if (entry.overridden) titleParts.push(t("overriddenNote"));
-        td.title = titleParts.join(" · ");
-
-        if (state.isHost && answer) {
-          td.classList.add("editable");
-          td.addEventListener("click", function () { cycleOverride(catKey, pid); });
-        }
-
-        tr.appendChild(td);
-      });
+      tr.appendChild(buildAnswerCell(catKey, pid, scoring));
       table.appendChild(tr);
     });
 
     wrap.innerHTML = "";
     wrap.appendChild(table);
   }
+
+  function renderResultsStep(scoring, categories, step) {
+    var label = categories[step];
+    var catKey = "cat" + step;
+
+    document.getElementById("resultsStepLabel").textContent =
+      t("resultsStepLabel", { current: step + 1, total: categories.length, label: label });
+
+    renderCategoryTable(catKey, label, scoring);
+
+    document.getElementById("resultsHostHint").classList.toggle("hidden", !state.isHost);
+
+    var prevBtn = document.getElementById("prevCategoryBtn");
+    var nextBtn = document.getElementById("nextCategoryBtn");
+    var waitingMsg = document.getElementById("waitingCategoryMsg");
+
+    prevBtn.classList.toggle("hidden", !state.isHost || step === 0);
+    nextBtn.classList.toggle("hidden", !state.isHost);
+    nextBtn.textContent = (step === categories.length - 1) ? t("seeResultsBtn") : t("nextCategoryBtn");
+    waitingMsg.classList.toggle("hidden", state.isHost);
+  }
+
+  function renderResultsSummary() {
+    renderLeaderboard();
+    document.getElementById("nextRoundBtn").classList.toggle("hidden", !state.isHost);
+    document.getElementById("waitingNextMsg").classList.toggle("hidden", state.isHost);
+    document.getElementById("backToCategoriesBtn").classList.toggle("hidden", !state.isHost);
+
+    document.getElementById("editCategoriesBox").classList.toggle("hidden", !state.isHost);
+    if (state.isHost && summaryEditorRound !== state.room.round) {
+      summaryEditorRound = state.room.round;
+      gameCategoriesEditor.render(roomCategories(state.room).slice());
+    }
+  }
+
+  document.getElementById("nextCategoryBtn").addEventListener("click", function () {
+    if (!state.isHost) return;
+    var categories = roomCategories(state.room);
+    var step = state.room.resultsStep || 0;
+    db.ref("rooms/" + state.roomCode + "/resultsStep").set(Math.min(step + 1, categories.length));
+  });
+
+  document.getElementById("prevCategoryBtn").addEventListener("click", function () {
+    if (!state.isHost) return;
+    var step = state.room.resultsStep || 0;
+    db.ref("rooms/" + state.roomCode + "/resultsStep").set(Math.max(0, step - 1));
+  });
+
+  document.getElementById("backToCategoriesBtn").addEventListener("click", function () {
+    if (!state.isHost) return;
+    var categories = roomCategories(state.room);
+    db.ref("rooms/" + state.roomCode + "/resultsStep").set(categories.length - 1);
+  });
 
   function renderLeaderboard() {
     var list = document.getElementById("leaderboard");
