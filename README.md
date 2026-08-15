@@ -12,6 +12,9 @@ timer di 60 secondi, ognuno dal proprio telefono/computer.
 - **Round**: a tutti viene mostrata la stessa lettera e lo stesso countdown di 60 secondi (sincronizzato tramite Firebase). Ognuno scrive le proprie 6 risposte sul proprio schermo — non si vedono le risposte degli altri finché il round non finisce.
 - **STOP**: chiunque può premere "STOP! Ho finito" per terminare il round in anticipo per tutti (come nel gioco da tavolo).
 - **Punteggio**: a fine round si vede una tabella con le risposte di tutti. Regola: risposta assente o che non inizia con la lettera giusta = 0 punti; risposta valida e unica = 10 punti; risposta valida ma scritta anche da un altro giocatore = 5 punti (regola classica di "Nomi Cose e Città"). La classifica è cumulativa round dopo round.
+- **Lingua**: si scelgono Italiano o Inglese dalla home, prima di creare una stanza. La lingua è una proprietà della stanza: chi entra con un codice vede automaticamente le categorie e l'alfabeto nella lingua scelta da chi ha creato la stanza.
+- **Categorie personalizzate**: chi crea la stanza può modificare, aggiungere o rimuovere le categorie di gioco (minimo 2, massimo 10) prima di creare la stanza — di default sono Nome/Città/Paese/Cosa/Animale/Fiume (o l'equivalente inglese). Tutti i giocatori nella stanza giocano con le categorie scelte dall'host.
+- **Correzione manuale (host)**: non c'è un database automatico di parole valide — la validazione è "inizia con la lettera giusta" più il giudizio dell'host. Nella schermata dei risultati, l'host può toccare qualsiasi risposta per forzarla valida o non valida (per i casi dubbi: parole regionali, nomi propri, categorie personalizzate ambigue, ecc.). Il round successivo blocca il punteggio con le correzioni applicate.
 
 ## Passo 1 — Crea un progetto Firebase (gratis, 5 minuti)
 
@@ -49,6 +52,6 @@ La modalità test lascia il database aperto in lettura/scrittura a chiunque cono
 ## Limiti noti di questa v1 (miglioramenti futuri possibili)
 
 - Le stanze non vengono mai eliminate automaticamente (restano nel database). Per un uso intenso si potrebbe aggiungere una pulizia periodica.
-- Non c'è un controllo che la parola scritta esista davvero (es. potresti scrivere una città inventata) — la validazione è solo "inizia con la lettera giusta".
+- Non c'è un controllo automatico che la parola scritta esista davvero — la validazione è "inizia con la lettera giusta" più la correzione manuale dell'host, per scelta (niente database di parole da scaricare/mantenere).
 - Se un giocatore chiude la pagina a metà round, il suo nome resta nella stanza (non c'è ancora rilevamento di disconnessione).
 - Le regole del database in modalità test scadono dopo 30 giorni: dopo quella data smetterà di funzionare finché non aggiorni le regole (vedi nota sicurezza sopra).

@@ -75,6 +75,21 @@
 
   .card h2 { margin: 0 0 14px; font-size: 1.15rem; }
 
+  .lang-toggle { display: flex; gap: 8px; margin-bottom: 18px; }
+  .lang-btn {
+    flex: 1;
+    padding: 9px 10px;
+    border-radius: 10px;
+    border: 2px solid var(--border);
+    background: #fff;
+    color: var(--text-muted);
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .lang-btn.active { border-color: var(--accent); color: var(--accent); background: #ede9fe; }
+
   .field { margin-bottom: 14px; }
   .field label {
     display: block;
@@ -120,6 +135,41 @@
   .btn-stop { background: var(--warn); color: #fff; }
   .btn-row { display: flex; gap: 10px; }
   .btn-row .btn { width: auto; flex: 1; }
+
+  .category-row { display: flex; gap: 6px; margin-bottom: 8px; }
+  .category-row input {
+    flex: 1;
+    padding: 10px 12px;
+    font-size: 0.95rem;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+    font-family: inherit;
+  }
+  .category-row input:focus { border-color: var(--accent); }
+  .remove-cat-btn {
+    background: var(--warn-bg);
+    color: var(--warn);
+    border: none;
+    border-radius: 8px;
+    width: 38px;
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .add-cat-btn {
+    background: var(--ok-bg);
+    color: var(--ok);
+    border: none;
+    border-radius: 10px;
+    padding: 9px 12px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 2px;
+    font-family: inherit;
+  }
 
   .error-msg {
     background: var(--warn-bg);
@@ -176,21 +226,36 @@
   .dial-center .letter { font-size: 2.8rem; font-weight: 800; line-height: 1; color: var(--accent); }
   .dial-center .seconds { font-size: 0.9rem; font-weight: 700; color: #d97706; margin-top: 2px; }
 
+  .table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 16px;
+    border-radius: 10px;
+  }
   table.results-table {
-    width: 100%;
     border-collapse: collapse;
     font-size: 0.82rem;
-    margin-bottom: 16px;
   }
   table.results-table th, table.results-table td {
     border: 1px solid var(--border);
     padding: 6px 8px;
     text-align: left;
+    min-width: 78px;
+    white-space: nowrap;
   }
+  table.results-table th:first-child, table.results-table td:first-child { min-width: 64px; }
   table.results-table th { background: #f5f3ff; font-size: 0.72rem; text-transform: uppercase; }
   td.cell-ok { background: var(--ok-bg); }
   td.cell-dup { background: var(--dup-bg); }
   td.cell-invalid { background: var(--warn-bg); color: var(--text-muted); }
+  td.editable { cursor: pointer; }
+  td.editable:hover { outline: 2px dashed var(--accent); outline-offset: -2px; }
+
+  .results-hint {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin: -6px 0 12px;
+  }
 
   .leaderboard { list-style: none; padding: 0; margin: 0 0 16px; }
   .leaderboard li {
@@ -216,18 +281,19 @@
   .hidden { display: none !important; }
 
   footer { text-align: center; color: #ddd6fe; font-size: 0.72rem; margin-top: 20px; }
+  footer a { color: #ddd6fe; }
   .waiting-msg { text-align: center; color: var(--text-muted); padding: 10px 0; font-size: 0.9rem; }
 </style>
 </head>
 <body>
 <div class="app">
   <header>
-    <h1>🎲 Nomi, Cose e Città</h1>
-    <p>Multiplayer online — stanza con codice</p>
+    <h1 id="headerTitle">🎲 Nomi, Cose e Città</h1>
+    <p id="headerSubtitle">Multiplayer online — stanza con codice</p>
   </header>
 
   <div id="topbar" class="topbar hidden">
-    <div>Stanza <span class="code" id="topbarCode">----</span> · Round <span id="topbarRound">0</span></div>
+    <div><span id="topbarRoomLabel">Stanza</span> <span class="code" id="topbarCode">----</span> · <span id="topbarRoundLabel">Round</span> <span id="topbarRound">0</span></div>
     <button id="leaveBtn">Esci</button>
   </div>
 
@@ -235,25 +301,34 @@
 
   <!-- HOME -->
   <div id="view-home" class="card">
-    <h2>Inizia a giocare</h2>
+    <div class="lang-toggle" id="langToggle">
+      <button type="button" class="lang-btn" id="langBtnIt" data-lang="it">Italiano</button>
+      <button type="button" class="lang-btn" id="langBtnEn" data-lang="en">English</button>
+    </div>
+    <h2 id="homeTitle">Inizia a giocare</h2>
     <div class="field">
-      <label for="playerName">Il tuo nome</label>
-      <input type="text" id="playerName" placeholder="Es. Mattia" maxlength="20">
+      <label for="playerName" id="playerNameLabel">Il tuo nome</label>
+      <input type="text" id="playerName" maxlength="20">
+    </div>
+    <div class="field">
+      <label id="categoriesLabel">Categorie</label>
+      <div id="categoriesList"></div>
+      <button type="button" class="add-cat-btn" id="addCategoryBtn">+ Aggiungi categoria</button>
     </div>
     <button class="btn btn-primary" id="createRoomBtn">Crea una nuova stanza</button>
     <div class="field" style="margin-top:18px;">
-      <label for="joinCodeInput">Oppure entra con un codice</label>
-      <input type="text" id="joinCodeInput" placeholder="Es. AB3F" maxlength="4" style="text-transform:uppercase;">
+      <label for="joinCodeInput" id="joinCodeLabel">Oppure entra con un codice</label>
+      <input type="text" id="joinCodeInput" maxlength="4" style="text-transform:uppercase;">
     </div>
     <button class="btn btn-secondary" id="joinRoomBtn">Entra nella stanza</button>
   </div>
 
   <!-- LOBBY -->
   <div id="view-lobby" class="card hidden">
-    <h2>Sala d'attesa</h2>
+    <h2 id="lobbyTitle">Sala d'attesa</h2>
     <div class="room-code-display">
       <div class="code" id="lobbyCode">----</div>
-      <div class="sub">condividi questo codice con gli altri giocatori</div>
+      <div class="sub" id="lobbySub">condividi questo codice con gli altri giocatori</div>
     </div>
     <ul class="player-list" id="lobbyPlayerList"></ul>
     <button class="btn btn-primary" id="startRoundBtn">Inizia round</button>
@@ -281,15 +356,17 @@
 
   <!-- RESULTS -->
   <div id="view-results" class="card hidden">
-    <h2>Risultati round <span id="resultsRound"></span></h2>
-    <div id="resultsTableWrap"></div>
-    <h2>Classifica</h2>
+    <h2><span id="resultsTitle">Risultati round</span> <span id="resultsRound"></span></h2>
+    <p class="results-hint" id="resultsScrollHint">Scorri orizzontalmente per vedere tutte le colonne →</p>
+    <p class="results-hint hidden" id="resultsHostHint">Tocca una risposta per correggerla manualmente.</p>
+    <div id="resultsTableWrap" class="table-scroll"></div>
+    <h2 id="leaderboardTitle">Classifica</h2>
     <ul class="leaderboard" id="leaderboard"></ul>
     <button class="btn btn-primary" id="nextRoundBtn">Prossimo round</button>
     <div class="waiting-msg hidden" id="waitingNextMsg">In attesa che l'host avvii il prossimo round...</div>
   </div>
 
-  <footer>Versione multiplayer · v2</footer>
+  <footer id="footerNote">Versione multiplayer · v4</footer>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -300,17 +377,135 @@
   "use strict";
 
   // ---------- Costanti di gioco ----------
-  var CATEGORIES = [
-    { key: "nome", label: "Nome" },
-    { key: "citta", label: "Città" },
-    { key: "paese", label: "Paese" },
-    { key: "cosa", label: "Cosa" },
-    { key: "animale", label: "Animale" },
-    { key: "fiume", label: "Fiume" }
-  ];
-  var LETTERS = "ABCDEFGILMNOPRSTUVZ".split("");
+  var DEFAULT_CATEGORIES = {
+    it: ["Nome", "Città", "Paese", "Cosa", "Animale", "Fiume"],
+    en: ["Name", "City", "Country", "Thing", "Animal", "River"]
+  };
+  var MIN_CATEGORIES = 2;
+  var MAX_CATEGORIES = 10;
+
+  var LETTERS = {
+    it: "ABCDEFGILMNOPRSTUVZ".split(""),
+    en: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")
+  };
+
   var ROUND_MS = 60000;
   var CODE_CHARSET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // niente 0/O/1/I per evitare ambiguità
+
+  var I18N = {
+    it: {
+      headerTitle: "🎲 Nomi, Cose e Città",
+      headerSubtitle: "Multiplayer online — stanza con codice",
+      topbarRoomLabel: "Stanza",
+      topbarRoundLabel: "Round",
+      leaveBtn: "Esci",
+      homeTitle: "Inizia a giocare",
+      playerNameLabel: "Il tuo nome",
+      playerNamePlaceholder: "Es. Mattia",
+      categoriesLabel: "Categorie (l'host le sceglie per tutti)",
+      addCategoryBtn: "+ Aggiungi categoria",
+      removeCategoryTitle: "Rimuovi categoria",
+      createRoomBtn: "Crea una nuova stanza",
+      joinCodeLabel: "Oppure entra con un codice",
+      joinCodePlaceholder: "Es. AB3F",
+      joinRoomBtn: "Entra nella stanza",
+      lobbyTitle: "Sala d'attesa",
+      lobbySub: "condividi questo codice con gli altri giocatori",
+      badgeHost: "HOST",
+      startRoundBtn: "Inizia round",
+      waitingHostMsg: "In attesa che l'host avvii il round...",
+      stopBtn: "STOP! Ho finito",
+      playersInRound: "{n} giocatori in questo round",
+      fieldPlaceholder: "Con la lettera {letter}...",
+      hintWrongLetter: "Dovrebbe iniziare con {letter}",
+      resultsTitle: "Risultati round",
+      resultsScrollHint: "Scorri orizzontalmente per vedere tutte le colonne →",
+      resultsHostHint: "Tocca una risposta per correggerla manualmente (valida/non valida).",
+      leaderboardTitle: "Classifica",
+      nextRoundBtn: "Prossimo round",
+      waitingNextMsg: "In attesa che l'host avvii il prossimo round...",
+      footerNote: "Versione multiplayer · v4",
+      points: "pt",
+      reasonEmpty: "Nessuna risposta",
+      reasonInvalidLetter: "Non inizia con la lettera giusta",
+      reasonInvalidOverride: "Segnata come non valida dall'host",
+      reasonUnique: "Valida e unica: 10 punti",
+      reasonDuplicate: "Valida ma scritta anche da un altro: 5 punti",
+      overriddenNote: "corretta manualmente dall'host",
+      errNoName: "Inserisci il tuo nome.",
+      errNoFirebase: "Configura Firebase prima di continuare (vedi README.md).",
+      errNoCode: "Inserisci il codice della stanza.",
+      errNoCategories: "Inserisci almeno " + MIN_CATEGORIES + " categorie.",
+      errFirebaseBanner: "Firebase non è configurato. Apri firebase-config.js e inserisci i dati del tuo progetto Firebase (vedi README.md) per poter creare o entrare in una stanza.",
+      errCreateRetry: "Non riesco a creare una stanza, riprova.",
+      errCreateRoom: "Errore creando la stanza: ",
+      errRoomNotFound: "Nessuna stanza trovata con il codice {code}.",
+      errJoinRoom: "Errore entrando nella stanza: ",
+      errStartRound: "Errore avviando il round: "
+    },
+    en: {
+      headerTitle: "🎲 Names, Things & Cities",
+      headerSubtitle: "Online multiplayer — room with a code",
+      topbarRoomLabel: "Room",
+      topbarRoundLabel: "Round",
+      leaveBtn: "Leave",
+      homeTitle: "Start playing",
+      playerNameLabel: "Your name",
+      playerNamePlaceholder: "E.g. Alex",
+      categoriesLabel: "Categories (the host picks these for everyone)",
+      addCategoryBtn: "+ Add category",
+      removeCategoryTitle: "Remove category",
+      createRoomBtn: "Create a new room",
+      joinCodeLabel: "Or join with a code",
+      joinCodePlaceholder: "E.g. AB3F",
+      joinRoomBtn: "Join room",
+      lobbyTitle: "Waiting room",
+      lobbySub: "share this code with the other players",
+      badgeHost: "HOST",
+      startRoundBtn: "Start round",
+      waitingHostMsg: "Waiting for the host to start the round...",
+      stopBtn: "STOP! I'm done",
+      playersInRound: "{n} players in this round",
+      fieldPlaceholder: "Starting with {letter}...",
+      hintWrongLetter: "Should start with {letter}",
+      resultsTitle: "Round results",
+      resultsScrollHint: "Scroll sideways to see every column →",
+      resultsHostHint: "Tap an answer to override it manually (valid/invalid).",
+      leaderboardTitle: "Leaderboard",
+      nextRoundBtn: "Next round",
+      waitingNextMsg: "Waiting for the host to start the next round...",
+      footerNote: "Multiplayer version · v4",
+      points: "pt",
+      reasonEmpty: "No answer",
+      reasonInvalidLetter: "Doesn't start with the right letter",
+      reasonInvalidOverride: "Marked invalid by the host",
+      reasonUnique: "Valid and unique: 10 points",
+      reasonDuplicate: "Valid but also written by another player: 5 points",
+      overriddenNote: "manually corrected by the host",
+      errNoName: "Enter your name.",
+      errNoFirebase: "Set up Firebase before continuing (see README.md).",
+      errNoCode: "Enter the room code.",
+      errNoCategories: "Enter at least " + MIN_CATEGORIES + " categories.",
+      errFirebaseBanner: "Firebase isn't configured. Open firebase-config.js and fill in your Firebase project details (see README.md) to create or join a room.",
+      errCreateRetry: "Couldn't create a room, please try again.",
+      errCreateRoom: "Error creating the room: ",
+      errRoomNotFound: "No room found with code {code}.",
+      errJoinRoom: "Error joining the room: ",
+      errStartRound: "Error starting the round: "
+    }
+  };
+
+  function fmt(str, params) {
+    return str.replace(/\{(\w+)\}/g, function (m, key) {
+      return (params && params[key] !== undefined) ? params[key] : m;
+    });
+  }
+
+  function t(key, params) {
+    var dict = I18N[state.lang] || I18N.it;
+    var str = dict[key] || I18N.it[key] || key;
+    return params ? fmt(str, params) : str;
+  }
 
   // ---------- Funzioni pure (nessuna dipendenza da DOM/Firebase) ----------
   // Esposte su window per poterle testare/importare separatamente.
@@ -322,51 +517,75 @@
     return code;
   }
 
-  function pickLetter(lastLetter) {
-    var pool = LETTERS.filter(function (l) { return l !== lastLetter; });
+  function pickLetter(lastLetter, lang) {
+    var pool = (LETTERS[lang] || LETTERS.it).filter(function (l) { return l !== lastLetter; });
     return pool[Math.floor(Math.random() * pool.length)];
   }
 
+  function normalizeWord(s) {
+    return (s || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ");
+  }
+
   // Calcola i punti per ogni giocatore in un round, applicando la regola:
-  // risposta assente o che non inizia con la lettera => 0 punti
-  // risposta valida e unica tra i giocatori => 10 punti
-  // risposta valida ma duplicata (stessa parola di un altro giocatore) => 5 punti
-  // Ritorna { perCategory: { catKey: { playerId: {status, points} } }, totals: { playerId: number } }
-  function computeRoundScores(playersAnswers, letter) {
+  // - risposta assente o che non inizia con la lettera => 0 punti
+  // - un host può forzare manualmente una risposta valida/non valida (overrides) per
+  //   qualunque categoria, per gestire i casi dubbi (non esiste un database automatico
+  //   di parole valide: la validazione è la regola della lettera + il giudizio dell'host)
+  // - tra le risposte rimaste valide: unica tra i giocatori => 10 punti, duplicata => 5 punti
+  // categoryKeys: array di chiavi di categoria della stanza (es. ["cat0","cat1",...])
+  // overrides: { catKey: { pid: true|false } }
+  // Ritorna { perCategory: { catKey: { playerId: {status, points, overridden} } }, totals: { playerId: number } }
+  function computeRoundScores(playersAnswers, letter, categoryKeys, overrides) {
     var perCategory = {};
     var totals = {};
-    Object.keys(playersAnswers).forEach(function (pid) { totals[pid] = 0; });
+    var pids = Object.keys(playersAnswers);
+    pids.forEach(function (pid) { totals[pid] = 0; });
 
-    CATEGORIES.forEach(function (cat) {
-      var normalized = {}; // pid -> normalized answer (only if valid)
-      Object.keys(playersAnswers).forEach(function (pid) {
-        var answers = playersAnswers[pid] || {};
-        var raw = (answers[cat.key] || "").trim();
-        if (raw.length === 0) return;
-        var firstChar = raw.charAt(0).toUpperCase();
-        if (firstChar !== letter) return;
-        normalized[pid] = raw.toLowerCase();
+    categoryKeys.forEach(function (catKey) {
+      var catOverrides = (overrides && overrides[catKey]) || {};
+      var info = {};
+
+      pids.forEach(function (pid) {
+        var raw = ((playersAnswers[pid] || {})[catKey] || "").trim();
+        if (raw.length === 0) {
+          info[pid] = { reason: "empty", finalValid: false, normVal: null, overridden: false };
+          return;
+        }
+        var startsRight = raw.charAt(0).toUpperCase() === letter;
+        var normVal = normalizeWord(raw);
+        var override = catOverrides[pid];
+        var overridden = override === true || override === false;
+        var finalValid = overridden ? override : startsRight;
+        info[pid] = { reason: startsRight ? "ok" : "invalid-letter", finalValid: finalValid, normVal: normVal, overridden: overridden };
       });
 
       var freq = {};
-      Object.keys(normalized).forEach(function (pid) {
-        var val = normalized[pid];
-        freq[val] = (freq[val] || 0) + 1;
+      pids.forEach(function (pid) {
+        var r = info[pid];
+        if (r.finalValid) freq[r.normVal] = (freq[r.normVal] || 0) + 1;
       });
 
-      perCategory[cat.key] = {};
-      Object.keys(playersAnswers).forEach(function (pid) {
-        var val = normalized[pid];
-        var entry;
-        if (val === undefined) {
-          entry = { status: "invalid", points: 0 };
-        } else if (freq[val] === 1) {
-          entry = { status: "unique", points: 10 };
+      perCategory[catKey] = {};
+      pids.forEach(function (pid) {
+        var r = info[pid];
+        var status, points;
+        if (!r.finalValid) {
+          status = r.reason === "empty" ? "empty" : (r.overridden ? "invalid-override" : r.reason);
+          points = 0;
+        } else if (freq[r.normVal] === 1) {
+          status = "unique";
+          points = 10;
         } else {
-          entry = { status: "duplicate", points: 5 };
+          status = "duplicate";
+          points = 5;
         }
-        perCategory[cat.key][pid] = entry;
-        totals[pid] += entry.points;
+        perCategory[catKey][pid] = { status: status, points: points, overridden: r.overridden };
+        totals[pid] += points;
       });
     });
 
@@ -377,7 +596,8 @@
     generateRoomCode: generateRoomCode,
     pickLetter: pickLetter,
     computeRoundScores: computeRoundScores,
-    CATEGORIES: CATEGORIES,
+    normalizeWord: normalizeWord,
+    DEFAULT_CATEGORIES: DEFAULT_CATEGORIES,
     LETTERS: LETTERS
   };
 
@@ -403,10 +623,6 @@
     document.getElementById("errorBox").className = "error-msg";
   }
 
-  if (!firebaseReady) {
-    showError("Firebase non è configurato. Apri firebase-config.js e inserisci i dati del tuo progetto Firebase (vedi README.md) per poter creare o entrare in una stanza.");
-  }
-
   // ---------- Stato locale ----------
   var myId = localStorage.getItem("ncc_playerId");
   if (!myId) {
@@ -415,16 +631,30 @@
   }
 
   var state = {
+    lang: localStorage.getItem("ncc_lang") || "it",
     roomCode: null,
     isHost: false,
     room: null,       // ultimo snapshot di rooms/{code}
     players: {},      // ultimo snapshot di rooms/{code}/players
+    overrides: {},    // ultimo snapshot di rooms/{code}/roundOverrides/{round}
+    overridesRound: null, // round per cui è attaccato il listener overrides
     localTimerId: null,
-    finalizedRound: null, // numero round per cui ho già bloccato/inviato le risposte
-    scoredRound: null      // numero round per cui ho già scritto i punteggi
+    finalizedRound: null // numero round per cui ho già bloccato/inviato le risposte
   };
 
-  var refs = { room: null, players: null };
+  var refs = { room: null, players: null, overrides: null };
+
+  if (!firebaseReady) {
+    showError(t("errFirebaseBanner"));
+  }
+
+  function roomCategories(room) {
+    if (room && room.categories && room.categories.length) return room.categories;
+    return DEFAULT_CATEGORIES[(room && room.lang) || "it"];
+  }
+  function categoryKeysFor(room) {
+    return roomCategories(room).map(function (_, i) { return "cat" + i; });
+  }
 
   // ---------- Elementi DOM ----------
   var views = {
@@ -443,6 +673,101 @@
   var topbarCode = document.getElementById("topbarCode");
   var topbarRound = document.getElementById("topbarRound");
 
+  // ---------- i18n ----------
+  var STATIC_TEXT_IDS = [
+    "headerTitle", "headerSubtitle", "topbarRoomLabel", "topbarRoundLabel", "leaveBtn",
+    "homeTitle", "playerNameLabel", "categoriesLabel", "addCategoryBtn", "createRoomBtn",
+    "joinCodeLabel", "joinRoomBtn",
+    "lobbyTitle", "lobbySub", "startRoundBtn", "waitingHostMsg", "stopBtn",
+    "resultsTitle", "resultsScrollHint", "resultsHostHint", "leaderboardTitle", "nextRoundBtn", "waitingNextMsg",
+    "footerNote"
+  ];
+
+  function applyI18n() {
+    document.documentElement.lang = state.lang;
+    STATIC_TEXT_IDS.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = t(id);
+    });
+    document.getElementById("playerName").placeholder = t("playerNamePlaceholder");
+    document.getElementById("joinCodeInput").placeholder = t("joinCodePlaceholder");
+    document.getElementById("langBtnIt").classList.toggle("active", state.lang === "it");
+    document.getElementById("langBtnEn").classList.toggle("active", state.lang === "en");
+
+    if (!categoriesDirty) renderCategoriesEditor(DEFAULT_CATEGORIES[state.lang].slice());
+
+    if (state.room) {
+      if (state.room.state === "lobby") renderLobby();
+      if (state.room.state === "playing") renderPlaying();
+      if (state.room.state === "results") renderResults();
+    }
+  }
+
+  document.querySelectorAll(".lang-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      state.lang = btn.getAttribute("data-lang");
+      localStorage.setItem("ncc_lang", state.lang);
+      applyI18n();
+    });
+  });
+
+  // ---------- Home: categorie personalizzabili ----------
+  var categoriesDirty = false;
+
+  function getCategoryInputValues() {
+    return Array.prototype.map.call(document.querySelectorAll("#categoriesList input"), function (input) {
+      return input.value;
+    });
+  }
+
+  function renderCategoriesEditor(labels) {
+    var list = document.getElementById("categoriesList");
+    list.innerHTML = "";
+    labels.forEach(function (label, i) {
+      var row = document.createElement("div");
+      row.className = "category-row";
+
+      var input = document.createElement("input");
+      input.type = "text";
+      input.value = label;
+      input.maxLength = 24;
+      input.addEventListener("input", function () { categoriesDirty = true; });
+
+      row.appendChild(input);
+
+      if (labels.length > MIN_CATEGORIES) {
+        var removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.className = "remove-cat-btn";
+        removeBtn.textContent = "×";
+        removeBtn.title = t("removeCategoryTitle");
+        removeBtn.addEventListener("click", function () {
+          categoriesDirty = true;
+          var current = getCategoryInputValues();
+          current.splice(i, 1);
+          renderCategoriesEditor(current);
+        });
+        row.appendChild(removeBtn);
+      }
+
+      list.appendChild(row);
+    });
+
+    document.getElementById("addCategoryBtn").classList.toggle("hidden", labels.length >= MAX_CATEGORIES);
+  }
+
+  document.getElementById("addCategoryBtn").addEventListener("click", function () {
+    categoriesDirty = true;
+    var current = getCategoryInputValues();
+    if (current.length >= MAX_CATEGORIES) return;
+    current.push("");
+    renderCategoriesEditor(current);
+    var inputs = document.querySelectorAll("#categoriesList input");
+    inputs[inputs.length - 1].focus();
+  });
+
+  renderCategoriesEditor(DEFAULT_CATEGORIES[state.lang].slice());
+
   // ---------- Home: crea / entra ----------
   var playerNameInput = document.getElementById("playerName");
   var savedName = localStorage.getItem("ncc_playerName");
@@ -450,19 +775,21 @@
 
   document.getElementById("createRoomBtn").addEventListener("click", function () {
     var name = (playerNameInput.value || "").trim();
-    if (!name) { showError("Inserisci il tuo nome."); return; }
-    if (!firebaseReady) { showError("Configura Firebase prima di continuare (vedi README.md)."); return; }
+    var categories = getCategoryInputValues().map(function (c) { return c.trim(); }).filter(Boolean);
+    if (!name) { showError(t("errNoName")); return; }
+    if (categories.length < MIN_CATEGORIES) { showError(t("errNoCategories")); return; }
+    if (!firebaseReady) { showError(t("errNoFirebase")); return; }
     clearError();
     localStorage.setItem("ncc_playerName", name);
-    createRoom(name);
+    createRoom(name, categories);
   });
 
   document.getElementById("joinRoomBtn").addEventListener("click", function () {
     var name = (playerNameInput.value || "").trim();
     var code = (document.getElementById("joinCodeInput").value || "").trim().toUpperCase();
-    if (!name) { showError("Inserisci il tuo nome."); return; }
-    if (!code) { showError("Inserisci il codice della stanza."); return; }
-    if (!firebaseReady) { showError("Configura Firebase prima di continuare (vedi README.md)."); return; }
+    if (!name) { showError(t("errNoName")); return; }
+    if (!code) { showError(t("errNoCode")); return; }
+    if (!firebaseReady) { showError(t("errNoFirebase")); return; }
     clearError();
     localStorage.setItem("ncc_playerName", name);
     joinRoom(code, name);
@@ -470,17 +797,19 @@
 
   document.getElementById("leaveBtn").addEventListener("click", leaveRoom);
 
-  function createRoom(name, attemptsLeft) {
+  function createRoom(name, categories, attemptsLeft) {
     attemptsLeft = attemptsLeft === undefined ? 5 : attemptsLeft;
     var code = generateRoomCode();
     db.ref("rooms/" + code).once("value").then(function (snap) {
       if (snap.exists()) {
-        if (attemptsLeft <= 0) { showError("Non riesco a creare una stanza, riprova."); return; }
-        return createRoom(name, attemptsLeft - 1);
+        if (attemptsLeft <= 0) { showError(t("errCreateRetry")); return; }
+        return createRoom(name, categories, attemptsLeft - 1);
       }
       var roomData = {
         state: "lobby",
         hostId: myId,
+        lang: state.lang,
+        categories: categories,
         round: 0,
         lastLetter: null,
         letter: null,
@@ -493,20 +822,20 @@
         });
       }).then(function () {
         enterRoom(code, true);
-      }).catch(function (e) { showError("Errore creando la stanza: " + e.message); });
-    }).catch(function (e) { showError("Errore creando la stanza: " + e.message); });
+      }).catch(function (e) { showError(t("errCreateRoom") + e.message); });
+    }).catch(function (e) { showError(t("errCreateRoom") + e.message); });
   }
 
   function joinRoom(code, name) {
     db.ref("rooms/" + code).once("value").then(function (snap) {
-      if (!snap.exists()) { showError("Nessuna stanza trovata con il codice " + code + "."); return; }
+      if (!snap.exists()) { showError(t("errRoomNotFound", { code: code })); return; }
       return db.ref("rooms/" + code + "/players/" + myId).set({
         name: name,
         joinedAt: firebase.database.ServerValue.TIMESTAMP
       }).then(function () {
         enterRoom(code, snap.val().hostId === myId);
       });
-    }).catch(function (e) { showError("Errore entrando nella stanza: " + e.message); });
+    }).catch(function (e) { showError(t("errJoinRoom") + e.message); });
   }
 
   function enterRoom(code, isHost) {
@@ -528,32 +857,72 @@
       if (refs.players) db.ref("rooms/" + state.roomCode + "/players/" + myId).remove();
       if (refs.room) refs.room.off();
       if (refs.players) refs.players.off();
+      detachOverridesListener();
     }
     clearInterval(state.localTimerId);
     state.roomCode = null;
     state.isHost = false;
     state.room = null;
     state.players = {};
+    state.overrides = {};
+    state.overridesRound = null;
     state.finalizedRound = null;
-    state.scoredRound = null;
     topbar.classList.add("hidden");
+    applyI18n();
     showView("home");
+  }
+
+  // ---------- Overrides dell'host (correzione manuale delle risposte) ----------
+  function attachOverridesListener(round) {
+    detachOverridesListener();
+    refs.overrides = db.ref("rooms/" + state.roomCode + "/roundOverrides/" + round);
+    refs.overrides.on("value", onOverridesChange);
+  }
+  function detachOverridesListener() {
+    if (refs.overrides) { refs.overrides.off(); refs.overrides = null; }
+  }
+  function onOverridesChange(snap) {
+    state.overrides = snap.val() || {};
+    if (state.room && state.room.state === "results") renderResults();
+  }
+
+  function cycleOverride(catKey, pid) {
+    var current = state.overrides[catKey] && state.overrides[catKey][pid];
+    var path = "rooms/" + state.roomCode + "/roundOverrides/" + state.room.round + "/" + catKey + "/" + pid;
+    if (current === undefined || current === null) {
+      db.ref(path).set(true);   // automatico -> forza valida
+    } else if (current === true) {
+      db.ref(path).set(false);  // forza valida -> forza non valida
+    } else {
+      db.ref(path).remove();    // forza non valida -> automatico
+    }
   }
 
   // ---------- Reazione ai cambi di stato stanza/giocatori ----------
   function onRoomChange(snap) {
     var room = snap.val();
     if (!room) { leaveRoom(); return; }
+    var langChanged = state.lang !== (room.lang || "it");
     state.room = room;
+    state.lang = room.lang || "it";
+    if (langChanged) applyI18n();
     topbarRound.textContent = room.round || 0;
 
     if (room.state === "lobby") {
+      detachOverridesListener();
+      state.overridesRound = null;
       renderLobby();
       showView("lobby");
     } else if (room.state === "playing") {
+      detachOverridesListener();
+      state.overridesRound = null;
       renderPlaying();
       showView("playing");
     } else if (room.state === "results") {
+      if (state.overridesRound !== room.round) {
+        state.overridesRound = room.round;
+        attachOverridesListener(room.round);
+      }
       renderResults();
       showView("results");
     }
@@ -576,7 +945,7 @@
       if (pid === state.room.hostId) {
         var badge = document.createElement("span");
         badge.className = "badge-host";
-        badge.textContent = "HOST";
+        badge.textContent = t("badgeHost");
         li.appendChild(badge);
       }
       list.appendChild(li);
@@ -591,12 +960,30 @@
   document.getElementById("startRoundBtn").addEventListener("click", startRound);
   document.getElementById("nextRoundBtn").addEventListener("click", startRound);
 
+  function computeRoundScoresForCurrentState() {
+    var playersAnswers = {};
+    Object.keys(state.players).forEach(function (pid) {
+      playersAnswers[pid] = (state.players[pid] && state.players[pid].answers) || {};
+    });
+    return computeRoundScores(playersAnswers, state.room.letter, categoryKeysFor(state.room), state.overrides);
+  }
+
   function startRound() {
+    var updates = {};
+
+    // Se stiamo lasciando la schermata risultati, blocchiamo ora il punteggio
+    // di quel round (con eventuali correzioni manuali dell'host già applicate).
+    if (state.room.state === "results" && state.room.letter) {
+      var finalScoring = computeRoundScoresForCurrentState();
+      Object.keys(finalScoring.totals).forEach(function (pid) {
+        updates["rooms/" + state.roomCode + "/players/" + pid + "/scoreByRound/" + state.room.round] = finalScoring.totals[pid];
+      });
+    }
+
     var newRound = (state.room.round || 0) + 1;
-    var letter = pickLetter(state.room.lastLetter);
+    var letter = pickLetter(state.room.lastLetter, state.lang);
     var endTime = Date.now() + ROUND_MS;
 
-    var updates = {};
     updates["rooms/" + state.roomCode + "/state"] = "playing";
     updates["rooms/" + state.roomCode + "/round"] = newRound;
     updates["rooms/" + state.roomCode + "/letter"] = letter;
@@ -606,7 +993,7 @@
       updates["rooms/" + state.roomCode + "/players/" + pid + "/answers"] = null;
     });
 
-    db.ref().update(updates).catch(function (e) { showError("Errore avviando il round: " + e.message); });
+    db.ref().update(updates).catch(function (e) { showError(t("errStartRound") + e.message); });
   }
 
   // ---------- PLAYING ----------
@@ -623,7 +1010,7 @@
     }
 
     var count = Object.keys(state.players).length;
-    document.getElementById("playersInRoundMsg").textContent = count + " giocatori in questo round";
+    document.getElementById("playersInRoundMsg").textContent = t("playersInRound", { n: count });
 
     tickTimer();
     clearInterval(state.localTimerId);
@@ -660,23 +1047,25 @@
   function buildBoard(letter) {
     var board = document.getElementById("board");
     board.innerHTML = "";
-    CATEGORIES.forEach(function (cat) {
+    var categories = roomCategories(state.room);
+    categories.forEach(function (label, i) {
+      var catKey = "cat" + i;
       var field = document.createElement("div");
       field.className = "field";
-      field.id = "pfield-" + cat.key;
+      field.id = "pfield-" + catKey;
 
-      var label = document.createElement("label");
-      label.textContent = cat.label;
+      var labelEl = document.createElement("label");
+      labelEl.textContent = label;
 
       var input = document.createElement("input");
       input.type = "text";
-      input.id = "pinput-" + cat.key;
+      input.id = "pinput-" + catKey;
       input.autocomplete = "off";
-      input.placeholder = "Con la lettera " + letter + "...";
+      input.placeholder = t("fieldPlaceholder", { letter: letter });
 
       var hint = document.createElement("div");
       hint.className = "hint";
-      hint.id = "phint-" + cat.key;
+      hint.id = "phint-" + catKey;
 
       var debounceTimer = null;
       input.addEventListener("input", function () {
@@ -686,16 +1075,16 @@
         if (val.length > 0) {
           if (val.charAt(0).toUpperCase() !== letter) {
             field.classList.add("wrong-letter");
-            hint.textContent = "Dovrebbe iniziare con " + letter;
+            hint.textContent = t("hintWrongLetter", { letter: letter });
           } else {
             field.classList.add("filled");
           }
         }
         clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(function () { saveAnswer(cat.key, input.value); }, 250);
+        debounceTimer = setTimeout(function () { saveAnswer(catKey, input.value); }, 250);
       });
 
-      field.appendChild(label);
+      field.appendChild(labelEl);
       field.appendChild(input);
       field.appendChild(hint);
       board.appendChild(field);
@@ -725,42 +1114,42 @@
     if (!room.letter) return;
     document.getElementById("resultsRound").textContent = room.round;
 
-    var playersAnswers = {};
-    Object.keys(state.players).forEach(function (pid) {
-      playersAnswers[pid] = (state.players[pid] && state.players[pid].answers) || {};
-    });
+    var scoring = computeRoundScoresForCurrentState();
 
-    var scoring = computeRoundScores(playersAnswers, room.letter);
-
-    // Salva i punti di questo round (idempotente: stesso calcolo su ogni client)
-    if (state.scoredRound !== room.round && state.isHost) {
-      state.scoredRound = room.round;
-      Object.keys(scoring.totals).forEach(function (pid) {
-        db.ref("rooms/" + state.roomCode + "/players/" + pid + "/scoreByRound/" + room.round)
-          .set(scoring.totals[pid]);
-      });
-    }
-
-    renderResultsTable(room, playersAnswers, scoring);
+    renderResultsTable(room, scoring);
     renderLeaderboard();
 
     var nextBtn = document.getElementById("nextRoundBtn");
     var waitingMsg = document.getElementById("waitingNextMsg");
+    var hostHint = document.getElementById("resultsHostHint");
     nextBtn.classList.toggle("hidden", !state.isHost);
     waitingMsg.classList.toggle("hidden", state.isHost);
+    hostHint.classList.toggle("hidden", !state.isHost);
   }
 
-  function renderResultsTable(room, playersAnswers, scoring) {
+  function reasonKeyFor(status) {
+    switch (status) {
+      case "empty": return "reasonEmpty";
+      case "invalid-letter": return "reasonInvalidLetter";
+      case "invalid-override": return "reasonInvalidOverride";
+      case "unique": return "reasonUnique";
+      case "duplicate": return "reasonDuplicate";
+      default: return "";
+    }
+  }
+
+  function renderResultsTable(room, scoring) {
     var wrap = document.getElementById("resultsTableWrap");
     var pids = Object.keys(state.players);
+    var categories = roomCategories(room);
     var table = document.createElement("table");
     table.className = "results-table";
 
     var thead = document.createElement("tr");
     thead.appendChild(document.createElement("th"));
-    CATEGORIES.forEach(function (cat) {
+    categories.forEach(function (label) {
       var th = document.createElement("th");
-      th.textContent = cat.label;
+      th.textContent = label;
       thead.appendChild(th);
     });
     table.appendChild(thead);
@@ -772,12 +1161,27 @@
       nameTd.style.fontWeight = "700";
       tr.appendChild(nameTd);
 
-      CATEGORIES.forEach(function (cat) {
+      categories.forEach(function (label, i) {
+        var catKey = "cat" + i;
         var td = document.createElement("td");
-        var answer = (playersAnswers[pid] && playersAnswers[pid][cat.key]) || "";
-        var entry = scoring.perCategory[cat.key][pid];
-        td.textContent = answer ? (answer + " (" + entry.points + ")") : "—";
+        var answer = ((state.players[pid] && state.players[pid].answers) || {})[catKey] || "";
+        var entry = scoring.perCategory[catKey][pid];
+        var text = answer ? (answer + " (" + entry.points + ")") : "—";
+        if (entry.overridden) text += " ✏️";
+        td.textContent = text;
         td.className = entry.status === "unique" ? "cell-ok" : (entry.status === "duplicate" ? "cell-dup" : "cell-invalid");
+
+        var titleParts = [];
+        var reasonKey = reasonKeyFor(entry.status);
+        if (reasonKey) titleParts.push(t(reasonKey));
+        if (entry.overridden) titleParts.push(t("overriddenNote"));
+        td.title = titleParts.join(" · ");
+
+        if (state.isHost && answer) {
+          td.classList.add("editable");
+          td.addEventListener("click", function () { cycleOverride(catKey, pid); });
+        }
+
         tr.appendChild(td);
       });
       table.appendChild(tr);
@@ -805,13 +1209,14 @@
       nameSpan.textContent = row.name;
       var ptsSpan = document.createElement("span");
       ptsSpan.className = "pts";
-      ptsSpan.textContent = row.total + " pt";
+      ptsSpan.textContent = row.total + " " + t("points");
       li.appendChild(nameSpan);
       li.appendChild(ptsSpan);
       list.appendChild(li);
     });
   }
 
+  applyI18n();
   showView("home");
 })();
 </script>
